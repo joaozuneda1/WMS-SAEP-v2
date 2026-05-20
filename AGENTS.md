@@ -48,6 +48,12 @@ The local environment is disposable in dev.
 - the source of truth for structural changes is `models`, constraints, indexes, domain rules, and tests; local migrations only materialize the local database;
 - tasks without structural changes may follow an incremental flow; a full reset is mandatory only for schema/model changes or when the local environment is inconsistent;
 
+## Language convention
+
+- Source code must use English for models, fields, views, URLs, variables, functions, classes, and internal identifiers.
+- Documentation and code comments must use PT-BR.
+- Django models must always define `verbose_name` and `verbose_name_plural` in PT-BR.
+
 ## Git workflow
 
 - **Never commit directly to main** — always create a feature branch first.
