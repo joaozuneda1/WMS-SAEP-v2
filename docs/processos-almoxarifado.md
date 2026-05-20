@@ -32,7 +32,7 @@ A requisição deve possuir um ciclo de vida claro, com estados explícitos. A v
    - Rascunho recém-criado ainda não possui número público rastreável.
    - O número público da requisição é gerado apenas no primeiro envio para autorização.
    - Não é permitido salvar rascunho sem itens.
-   - Pode ser editada pelo criador ou pelo beneficiário enquanto permanecer nesse estado.
+   - Pode ser editada somente por quem a criou enquanto permanecer nesse estado.
 
 2. **Aguardando autorização**
    - Requisição enviada para análise do chefe do setor do beneficiário.
