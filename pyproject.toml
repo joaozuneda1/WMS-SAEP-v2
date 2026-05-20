@@ -1,0 +1,7 @@
+[project]
+name = "wms-saep-v2"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=6.0,<6.1",
+]
