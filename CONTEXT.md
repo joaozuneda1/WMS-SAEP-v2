@@ -60,6 +60,12 @@ _Avoid_: destinatário, solicitante
 Pessoa que coleta fisicamente o material no momento do atendimento; pode não
 ser o Beneficiário.
 
+### Quantidades
+
+**Entregue líquida**:
+A parte de um item já entregue que ainda permanece fora do estoque — a
+quantidade entregue menos o que voltou por **Devolução** ou **Estorno**.
+
 ## Relationships
 
 - Cada **Usuário** pertence a exatamente um **Setor**.

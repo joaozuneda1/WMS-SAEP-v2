@@ -1,1 +1,86 @@
 @import "tailwindcss";
+
+/*
+  Design tokens — WMS-SAEP
+  Filosofia: Pragmatic Minimal (ver docs/design-system.md)
+  Dark mode: adiado (sem tokens de tema escuro nesta fase)
+*/
+
+@theme {
+  /* ─── Cor primária ─────────────────────────────────────────────────── */
+  --color-primary:           var(--color-blue-600);
+  --color-primary-hover:     var(--color-blue-700);
+  --color-primary-active:    var(--color-blue-800);
+  --color-primary-subtle:    var(--color-blue-50);
+  --color-primary-muted:     var(--color-blue-100);
+  --color-primary-border:    var(--color-blue-200);
+  --color-primary-text:      var(--color-blue-700);
+
+  /* ─── Estados semânticos ───────────────────────────────────────────── */
+  /* success = requisição atendida, saldo disponível */
+  --color-success:           var(--color-green-600);
+  --color-success-subtle:    var(--color-green-50);
+  --color-success-muted:     var(--color-green-100);
+  --color-success-border:    var(--color-green-200);
+  --color-success-text:      var(--color-green-700);
+
+  /* warning = ação requer atenção/decisão */
+  --color-warning:           var(--color-amber-500);
+  --color-warning-subtle:    var(--color-amber-50);
+  --color-warning-muted:     var(--color-amber-100);
+  --color-warning-border:    var(--color-amber-200);
+  --color-warning-text:      var(--color-amber-800);
+
+  /* danger = negação, erro, divergência, recusa */
+  --color-danger:            var(--color-red-600);
+  --color-danger-subtle:     var(--color-red-50);
+  --color-danger-muted:      var(--color-red-100);
+  --color-danger-border:     var(--color-red-200);
+  --color-danger-text:       var(--color-red-700);
+
+  /* info = neutro, informacional (usa slate) */
+  --color-info:              var(--color-slate-500);
+  --color-info-subtle:       var(--color-slate-50);
+  --color-info-muted:        var(--color-slate-100);
+  --color-info-border:       var(--color-slate-200);
+  --color-info-text:         var(--color-slate-700);
+
+  /* return = devolução operacional, reversão não-negativa */
+  --color-return:            var(--color-teal-600);
+  --color-return-subtle:     var(--color-teal-50);
+  --color-return-muted:      var(--color-teal-100);
+  --color-return-border:     var(--color-teal-200);
+  --color-return-text:       var(--color-teal-700);
+
+  /* ─── Superfícies e fundo ──────────────────────────────────────────── */
+  --color-surface:           var(--color-white);
+  --color-surface-raised:    var(--color-white);
+  --color-surface-overlay:   oklch(0 0 0 / 40%);
+  --color-bg-page:           var(--color-slate-50);
+  --color-bg-subtle:         var(--color-slate-100);
+
+  /* ─── Texto ────────────────────────────────────────────────────────── */
+  --color-text-primary:      var(--color-slate-900);
+  --color-text-secondary:    var(--color-slate-700);
+  --color-text-tertiary:     var(--color-slate-500);
+  --color-text-disabled:     var(--color-slate-400);
+  --color-text-on-primary:   var(--color-white);
+
+  /* ─── Bordas ───────────────────────────────────────────────────────── */
+  --color-border:            var(--color-slate-200);
+  --color-border-strong:     var(--color-slate-300);
+  --color-border-focus:      var(--color-blue-500);
+
+  /* ─── Motion ───────────────────────────────────────────────────────── */
+  --duration-instant:        50ms;
+  --duration-fast:           150ms;
+  --duration-normal:         250ms;
+  --duration-slow:           400ms;
+  --ease-default:            cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out:                cubic-bezier(0, 0, 0.2, 1);
+  --ease-in:                 cubic-bezier(0.4, 0, 1, 1);
+
+  /* ─── Layout ───────────────────────────────────────────────────────── */
+  --width-content:           80rem;   /* max-w-screen-xl — container principal */
+  --width-card-sm:           24rem;   /* max-w-sm — card de login */
+}

@@ -170,10 +170,11 @@ class ItemRequisicao(models.Model):
 
 
 class EventoTimeline(models.TextChoices):
-    """Os 12 eventos canônicos da timeline da requisição."""
+    """Os 13 eventos canônicos da timeline da requisição."""
 
     CRIACAO = 'criacao', 'Criação'
     ENVIO_AUTORIZACAO = 'envio_autorizacao', 'Envio para autorização'
+    RETORNO_RASCUNHO = 'retorno_rascunho', 'Retorno para rascunho'
     RECUSA = 'recusa', 'Recusa'
     AUTORIZACAO_TOTAL = 'autorizacao_total', 'Autorização total'
     CANCELAMENTO = 'cancelamento', 'Cancelamento'

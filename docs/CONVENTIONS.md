@@ -40,21 +40,35 @@ volume justificar. Arquivos nascem com conteúdo — não criar stubs vazios.
 
 ## Regras
 
-**Views são finas.** Fluxo: ler input → chamar policy → chamar service ou
-selector → renderizar. Nenhuma regra de domínio, nenhuma query de escopo,
-nenhuma decisão de autorização própria na view.
+**Views são finas.** Fluxo: ler input → chamar service com IDs →
+traduzir exceção de domínio para HTTP → renderizar ou redirect. A view passa
+`request.user.id`, nunca `request.user`. Nenhuma regra de domínio, query de
+escopo ou decisão de autorização própria na view.
 
-**Services são o único ponto de mutação de domínio.** Um service:
+**Services são o único ponto de mutação de domínio.** Um service (ADR-0011):
+- assinatura keyword-only obrigatória: `def criar_X(*, ator_id: int, ...) -> Entidade`;
+- recebe IDs, carrega entidades internamente com relações necessárias;
 - abre `transaction.atomic` quando há escrita de domínio;
-- chama a policy aplicável antes de mutar;
-- aplica transições via `transitions.py` (em `requisicoes`);
+- valida transição via `transitions.py` (`verificar_transicao_valida`);
+- chama `exigir_pode_*` da policy antes de aplicar efeitos;
 - registra os eventos de `TimelineRequisicao`;
-- dispara notificações apenas via `transaction.on_commit`.
+- dispara notificações apenas via `transaction.on_commit`;
+- retorna a entidade principal alterada (sem garantia de relações carregadas);
+- lança exceções de `apps.core.exceptions`, nunca exceções HTTP do Django.
 
-**Policies são autorização contextual compartilhada.** A mesma policy é
-chamada pela view e pelo service (PER-08). Checagem na view não substitui a
-policy no service. Policy decide a partir de ator + objeto/contexto; o papel
-efetivo é derivado (ADR-0001), nunca lido de um campo no usuário.
+**Policies são autorização contextual compartilhada.** Duas funções PT-BR
+por operação (ADR-0011): `pode_*(ator, obj) -> bool` (fonte de verdade) e
+`exigir_pode_*(ator, obj)` (delega para `pode_*`, lança `PermissaoNegada`).
+Services chamam `exigir_pode_*`. Templates/views podem chamar `pode_*`.
+`exigir_pode_*` nunca reimplementa a regra — sempre chama `pode_*`.
+
+**Exceções de domínio** (`apps/core/exceptions.py`, ADR-0011):
+- `PermissaoNegada` — ator sem permissão;
+- `EstadoInvalido` — transição de estado inválida;
+- `DadosInvalidos` — dados estruturalmente válidos mas inválidos para o domínio;
+- `ConflitoDominio` — conflito de estado, saldo, unicidade lógica ou corrida.
+Views traduzem explicitamente para HTTP. `IntegrityError` não é caminho normal
+para erro de domínio previsível.
 
 **Selectors concentram leitura não trivial.** Filas de autorização e
 atendimento, escopo de visibilidade por papel e listagens filtradas. Leitura
@@ -70,6 +84,144 @@ de uso em `save()`, não geram timeline por signals.
 **Estoque** (ADR-0004 + EST-06): toda mutação de saldo passa por
 `estoque.services`, sob `transaction.atomic` + `select_for_update` sobre
 `SaldoEstoque`, em ordem determinística. Nenhum outro app escreve saldo.
+Exceção única documentada: ver `#seed-bootstrap-exceptions` abaixo.
+
+## Seed e dados de desenvolvimento
+
+Decisão de fundo: [ADR-0009](adr/0009-seed-dev-dados-minimos-ambiente.md).
+
+O command `seed_dev` (`apps/core/management/commands/seed_dev.py`) é a fonte
+de verdade para dados canônicos do ambiente local. Use `make seed-dev` para
+inicializar ou convergir o banco.
+
+### Seed bootstrap exceptions
+
+O seed pode escrever diretamente em tabelas protegidas por services **apenas**
+quando todas as condições forem satisfeitas:
+
+1. A escrita representa estado inicial de ambiente, não evento operacional de domínio.
+2. A função está isolada, nomeada com sufixo `_bootstrap_exception` e contém
+   comentário `# SEED BOOTSTRAP EXCEPTION` apontando para este documento.
+3. A escrita é idempotente e convergente.
+4. O seed não cria histórico, timeline ou auditoria artificial.
+5. Fluxos de aplicação continuam obrigados a usar os services de domínio.
+
+Atualmente, apenas `_seed_saldos_iniciais_bootstrap_exception()` usa esse
+padrão. Não reutilizar fora do seed.
+
+### Regras para agentes de IA
+
+```
+Não usar get_or_create para entidades canônicas do seed — usar update_or_create.
+Não usar id numérico como referência de seed.
+Não sobrescrever registros fora da lista declarada no seed.
+Não criar Requisicao, TimelineRequisicao ou movimentação no seed_dev.
+Não incrementar SequenciaRequisicao.ultimo_numero no seed.
+SequenciaRequisicao usa get_or_create, nunca update_or_create.
+seed_dev não importa factory_boy. Factories não importam dados do seed_dev.
+Chefia (Setor.chefe) só é atribuída após todos os usuários existirem.
+```
+
+## Testes
+
+Decisão de fundo: [ADR-0010](adr/0010-estrategia-de-testes.md).
+
+| Camada | Arquivo | Responsabilidade |
+|--------|---------|-----------------|
+| Models | `test_models.py` | Constraints não triviais, properties semânticas |
+| Policies | `test_policies.py` | Matriz de autorização (chamada direta) |
+| Selectors | `test_selectors.py` | Visibilidade e escopo (chamada direta, IDs) |
+| Services | `test_services.py` | 3 testes/transição: feliz, estado inválido, permissão negada |
+| Views | `test_views.py` | Contrato HTTP: auth, permissão, smoke, redirect+mutação mínima |
+
+**Anatomia por transição de service:** caminho feliz (estado + efeitos + timeline), estado inválido (nenhuma escrita), permissão negada (nenhuma escrita).
+
+**Regras para agentes:**
+
+```
+Não duplicar matrix de policy em service tests.
+Não duplicar matrix de selector em view tests.
+Policy tests usam banco real (papéis derivados de FK/query).
+Selector tests comparam sets de IDs, não HTML.
+View tests verificam redirect + um estado principal para POST de mutação.
+Não usar factory_boy nesta fase.
+Não usar seed_dev como pré-condição de teste.
+Testes de concorrência real (threads) são a exceção, não a regra.
+tests.py arquivo único vira pacote tests/ quando precisar de 2+ módulos.
+```
+
+## Mensagens ao usuário
+
+### Fluxo PRG com HTMX
+
+Ações de transição (POST) sempre retornam redirect após sucesso. Para chamadas
+HTMX, usar `HX-Redirect` em vez de redirect HTTP normal:
+
+```python
+def htmx_redirect(request, url):
+    if request.headers.get("HX-Request") == "true":
+        response = HttpResponse(status=204)
+        response["HX-Redirect"] = url
+        return response
+    return redirect(url)
+```
+
+Fragments HTMX ficam para leitura/interação auxiliar (GET). Nunca para
+transições de escrita.
+
+### Níveis e ARIA
+
+| Nível | Uso | ARIA role | Auto-dismiss |
+|-------|-----|-----------|-------------|
+| `success` | Ação de domínio concluída | `status` | 8s |
+| `info` | Estado informativo neutro (ex: logout) | `status` | 8s |
+| `warning` | Ação não aplicada; estado atual é compreensível | `alert` | Não |
+| `error` | Ação falhou; usuário deve corrigir/não tem permissão | `alert` | Não |
+
+Todas as mensagens têm botão de dismiss manual.
+
+### Mapeamento de exceções
+
+```
+PermissaoNegada   → messages.error
+DadosInvalidos    → messages.error
+EstadoInvalido    → messages.warning (padrão)
+ConflitoDominio   → messages.warning (padrão)
+```
+
+Views podem sobrescrever o nível quando o contexto exigir.
+
+### Texto das mensagens
+
+`ErroDominio.message` é a fonte do texto exibido — sempre em PT-BR, orientado
+ao usuário, sem termos técnicos de implementação (`SaldoEstoque`, `select_for_update`).
+Views exibem `str(exc)` diretamente; não mantêm tabela paralela de textos.
+
+`ErroDominio.code` é identificador estável para testes e APIs futuras.
+
+```python
+# service:
+raise EstadoInvalido(
+    "Esta requisição já foi atendida e não pode mais ser cancelada.",
+    code="estado_origem_invalido",
+)
+
+# view:
+except EstadoInvalido as exc:
+    messages.warning(request, str(exc))
+```
+
+Mensagens de sucesso incluem `numero_publico` quando disponível:
+`"Requisição REQ-2026-0042 autorizada com sucesso."` Rascunhos sem número
+recebem mensagem genérica.
+
+### Login e sessão
+
+```
+Login inválido    → form error (AuthenticationForm)
+Logout            → messages.info("Sessão encerrada.")
+Acesso sem login  → redirect limpo para login (sem message)
+```
 
 ## Checklist ao adicionar uma feature
 

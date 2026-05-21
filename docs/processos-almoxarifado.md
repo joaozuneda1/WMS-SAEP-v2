@@ -59,7 +59,7 @@ A requisição deve possuir um ciclo de vida claro, com estados explícitos. A v
 
 7. **Cancelada**
    - Requisição encerrada antes da retirada final.
-   - Rascunho nunca enviado para autorização pode ser descartado/excluído pelo criador ou beneficiário sem justificativa, pois ainda não virou requisição formal nem consumiu número público.
+   - Rascunho nunca enviado para autorização pode ser descartado/excluído pelo criador sem justificativa, pois ainda não virou requisição formal nem consumiu número público.
    - Rascunho que já foi enviado alguma vez e retornou de autorização mantém seu número público e só pode ser cancelado logicamente, sem justificativa.
    - Enquanto estiver aguardando autorização, o criador ou beneficiário pode cancelar definitivamente sem justificativa.
    - Quando autorizada, pode ser cancelada pelo criador, beneficiário, funcionário do Almoxarifado ou chefe do Almoxarifado, sempre com justificativa.
@@ -86,7 +86,7 @@ Regras iniciais:
 - Enquanto estiver em **rascunho**, a requisição pode ser editada somente por quem a criou.
 - Depois de enviada para autorização, a requisição não pode mais ser editada diretamente.
 - O número público é gerado apenas no primeiro envio para autorização.
-- Rascunho nunca enviado para autorização pode ser descartado/excluído pelo criador ou beneficiário sem justificativa, pois ainda não virou requisição formal nem consumiu número público.
+- Rascunho nunca enviado para autorização pode ser descartado/excluído pelo criador sem justificativa, pois ainda não virou requisição formal nem consumiu número público.
 - Rascunho que já foi enviado alguma vez e retornou de autorização mantém seu número público e só pode ser cancelado logicamente, sem justificativa.
 - Enquanto estiver aguardando autorização, o criador ou beneficiário pode cancelar definitivamente sem justificativa.
 - Quando autorizada, a requisição pode ser cancelada pelo criador, beneficiário, funcionário do Almoxarifado ou chefe do Almoxarifado, sempre com justificativa.

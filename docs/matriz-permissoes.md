@@ -55,7 +55,7 @@ Valores: **Sim**, **Não**, **Apenas próprio setor**, **Qualquer setor**, **Ape
 | Retornar para rascunho | Sim | Sim | Sim | Sim | Sim | Sim | Criador ou beneficiário enquanto ainda estiver em `aguardando_autorizacao`; depois do retorno, rascunho volta a ser creator-only. |
 | Cancelar aguardando autorização | Sim | Sim | Sim | Sim | Sim | Sim | Só criador ou beneficiário. |
 | Cancelar autorizada/pronta para retirada | Sim | Sim | Sim | Sim | Sim | Sim | Criador/beneficiário/Almoxarifado; justificativa; libera reserva e não baixa físico. |
-| Copiar atendida | Sim | Sim | Sim | Sim | Sim | Sim | Precisa ver origem e poder criar para beneficiário resultante; não copia autorizado/entregue. |
+| Copiar atendida ou recusada | Sim | Sim | Sim | Sim | Sim | Sim | Precisa ver origem e poder criar para beneficiário resultante; não copia autorizado/entregue. |
 | Ver fila de autorizações | Não | Não | Apenas próprio setor | Não | Apenas setor Almoxarifado | Sim |  |
 | Autorizar | Não | Não | Apenas próprio setor | Não | Apenas setor Almoxarifado | Sim | Setor do beneficiário define autorizador. |
 | Autorizar parcialmente | Não | Não | Não | Não | Não | Não | Não permitido; chefe autoriza integralmente ou recusa a requisição inteira. |

@@ -15,9 +15,10 @@ Para cada mudança, localizar o invariante aplicável, implementar na camada ind
 | USR-01 | Usuários | Usuário inativo não acessa nem opera. | Auth/policy. | Login bloqueado; escrita negada. | Crit. 11.1 |
 | USR-02 | Usuários | Todo usuário ativo é solicitante. | Policy derivada de usuário ativo. | Criar para si; negar operação fora do papel. | Crit. 11.1 |
 | USR-03 | Setores | Usuário pertence a um único setor. | Model; FK de setor principal. | Criar com setor; sem vínculos auxiliares. | Modelo 2.1 |
-| USR-04 | Setores | Todo setor tem chefe e não fica sem chefe. | Model/service; validação em alteração. | Criar com chefe; bloquear sem chefe. | Backlog ACE-002 |
+| USR-04 | Setores | Todo setor operacional ativo possui um chefe ativo; `Setor.chefe` apontando para usuário inativo viola o invariante. | Model/service; validação em alteração e na desativação de usuário. | Criar com chefe ativo; bloquear setor ativo sem chefe ativo. | Backlog ACE-002 |
 | USR-05 | Setores | Um chefe responde por apenas um setor. | Constraint/policy. | Bloquear chefe duplicado. | Modelo 2.1 |
 | USR-06 | Setores | Setor inativo permanece em histórico e não recebe nova requisição. | Service/policy; preservar FK histórica. | Negar nova requisição; histórico visível. | Modelo 2.1 |
+| USR-07 | Setores | Não desativar usuário que chefia setor ativo sem designar antes outro chefe ativo do próprio setor. | Service de desativação de usuário. | Bloquear desativação sem reassignment; permitir com novo chefe válido. | USR-04 |
 | PER-01 | Permissões | Solicitante cria apenas para si. | Policy/service compartilhados. | Próprio permitido; terceiro negado. | Crit. 11.1 |
 | PER-02 | Permissões | Auxiliar de setor cria para si e usuários dentro do próprio setor. | Policy por setor principal. | Mesmo setor permitido; outro negado. | Crit. 11.2 |
 | PER-03 | Permissões | Chefe autoriza só beneficiários do próprio setor. | Policy por setor responsável. | Próprio setor permitido; outro negado. | Crit. 2.1 |
@@ -33,7 +34,7 @@ Para cada mudança, localizar o invariante aplicável, implementar na camada ind
 | REQ-06 | Requisições | Após envio, não há edição direta de itens. | Máquina de estados/service. | Bloquear edição; permitir retorno para rascunho. | Crit. 1.8 |
 | REQ-07 | Requisições | Registrar criador, beneficiário e setor do beneficiário. | Campos obrigatórios/snapshots. | Criar em nome de terceiro preservando papéis. | Crit. 1.1 |
 | REQ-08 | Requisições | Timeline registra eventos principais e é visível a autorizados. | Service/policy. | Eventos do ciclo; autorizado vê completa; fora de escopo não vê. | Modelo 2.1 |
-| REQ-09 | Requisições | Cópia recalcula saldo e não copia autorizado/entregue. | Service de cópia. | Copiar atendida; bloquear item sem saldo/divergente. | Crit. 1.13 |
+| REQ-09 | Requisições | Cópia recalcula saldo e não copia autorizado/entregue; origem pode ser atendida ou recusada. | Service de cópia. | Copiar atendida ou recusada; bloquear item sem saldo/divergente. | Crit. 1.13 |
 | ITEM-01 | Itens | Na autorização, quantidade autorizada deve ser igual à quantidade solicitada para todos os itens. | Service/constraint. | Autorizar integralmente; bloquear autorização parcial, zero ou acima do solicitado. | Crit. 2 |
 | ITEM-02 | Itens | Quantidade entregue nunca maior que autorizada. | Service/constraint. | Bloquear entrega acima. | Crit. 3 |
 | ITEM-03 | Itens | Atendimento parcial exige justificativa. | Service | Menor com justificativa; sem justificativa negado. | Crit. 3.3 |
