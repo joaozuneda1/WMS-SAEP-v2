@@ -3,7 +3,7 @@
 ## Scope
 
 **Inclui:**
-- TR-001: criar requisição (N/A → rascunho)
+- TR-001: criar requisição (criação → RASCUNHO — operação de criação, não uma transição em transitions.py)
 - TR-002: editar rascunho (rascunho → rascunho)
 - Autocomplete HTMX de materiais
 - Form + formset de itens com add/remove dinâmico via HTMX
@@ -77,7 +77,7 @@
 ### `test_views.py` (contrato HTTP)
 - GET /nova/ sem login → 302 login
 - GET /nova/ → 200
-- POST válido → 302 /`<pk>`/editar/ + mensagem sucesso
+- POST válido → 302 /`<pk>`/editar/ + mensagem de sucesso
 - POST inválido → 200 + erros no form
 - POST forjado (beneficiário fora de escopo) → 200 + messages.error
 - GET /`<pk>`/editar/ sem login → 302 login

@@ -105,7 +105,7 @@ Parâmetros de contexto:
 
   {# Campo DELETE do formset (escondido — controlado por Alpine/botão) #}
   {% if form.DELETE %}
-    <input type="hidden" name="{{ form.DELETE.html_name }}" :value="deletado ? 'on' : ''" x-data x-ref="deleteField">
+    <input type="hidden" name="{{ form.DELETE.html_name }}" value="">
   {% endif %}
 
   {# Botão remover #}
