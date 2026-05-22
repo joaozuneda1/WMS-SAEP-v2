@@ -15,12 +15,18 @@ from apps.requisicoes.services import criar_requisicao, editar_rascunho
 # TR-001: criar_requisicao — caminho feliz
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_criar_requisicao_estado_rascunho(solicitante, material_disponivel):
     req = criar_requisicao(
         ator_id=solicitante.pk,
         beneficiario_id=solicitante.pk,
-        itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('5')}],
+        itens=[
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('5'),
+            }
+        ],
     )
     assert req.pk is not None
     assert req.estado == EstadoRequisicao.RASCUNHO
@@ -31,18 +37,30 @@ def test_criar_requisicao_sem_numero_publico(solicitante, material_disponivel):
     req = criar_requisicao(
         ator_id=solicitante.pk,
         beneficiario_id=solicitante.pk,
-        itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('1')}],
+        itens=[
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('1'),
+            }
+        ],
     )
     assert req.numero_publico is None
 
 
 @pytest.mark.django_db
-def test_criar_requisicao_snapshot_setor_beneficiario(chefe_obras, outro_usuario_obras, setor_obras, material_disponivel):
+def test_criar_requisicao_snapshot_setor_beneficiario(
+    chefe_obras, outro_usuario_obras, setor_obras, material_disponivel
+):
     """setor_beneficiario é snapshot do setor do beneficiário no momento da criação."""
     req = criar_requisicao(
         ator_id=chefe_obras.pk,
         beneficiario_id=outro_usuario_obras.pk,
-        itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('2')}],
+        itens=[
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('2'),
+            }
+        ],
     )
     assert req.setor_beneficiario_id == setor_obras.pk
     assert req.criador_id == chefe_obras.pk
@@ -54,7 +72,12 @@ def test_criar_requisicao_registra_evento_criacao(solicitante, material_disponiv
     req = criar_requisicao(
         ator_id=solicitante.pk,
         beneficiario_id=solicitante.pk,
-        itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('3')}],
+        itens=[
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('3'),
+            }
+        ],
     )
     evento = req.eventos.get()
     assert evento.evento == EventoTimeline.CRIACAO
@@ -63,13 +86,21 @@ def test_criar_requisicao_registra_evento_criacao(solicitante, material_disponiv
 
 
 @pytest.mark.django_db
-def test_criar_requisicao_cria_itens(solicitante, material_disponivel, material_disponivel_2):
+def test_criar_requisicao_cria_itens(
+    solicitante, material_disponivel, material_disponivel_2
+):
     req = criar_requisicao(
         ator_id=solicitante.pk,
         beneficiario_id=solicitante.pk,
         itens=[
-            {'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('5')},
-            {'material_id': material_disponivel_2.pk, 'quantidade_solicitada': Decimal('2')},
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('5'),
+            },
+            {
+                'material_id': material_disponivel_2.pk,
+                'quantidade_solicitada': Decimal('2'),
+            },
         ],
     )
     assert req.itens.count() == 2
@@ -79,29 +110,45 @@ def test_criar_requisicao_cria_itens(solicitante, material_disponivel, material_
 # TR-001: criar_requisicao — permissão negada
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
-def test_criar_requisicao_solicitante_nao_pode_criar_para_terceiro(solicitante, outro_usuario_obras, material_disponivel):
+def test_criar_requisicao_solicitante_nao_pode_criar_para_terceiro(
+    solicitante, outro_usuario_obras, material_disponivel
+):
     with pytest.raises(PermissaoNegada):
         criar_requisicao(
             ator_id=solicitante.pk,
             beneficiario_id=outro_usuario_obras.pk,
-            itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('1')}],
+            itens=[
+                {
+                    'material_id': material_disponivel.pk,
+                    'quantidade_solicitada': Decimal('1'),
+                }
+            ],
         )
 
 
 @pytest.mark.django_db
-def test_criar_requisicao_chefe_nao_pode_criar_para_outro_setor(chefe_obras, usuario_ti, material_disponivel):
+def test_criar_requisicao_chefe_nao_pode_criar_para_outro_setor(
+    chefe_obras, usuario_ti, material_disponivel
+):
     with pytest.raises(PermissaoNegada):
         criar_requisicao(
             ator_id=chefe_obras.pk,
             beneficiario_id=usuario_ti.pk,
-            itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('1')}],
+            itens=[
+                {
+                    'material_id': material_disponivel.pk,
+                    'quantidade_solicitada': Decimal('1'),
+                }
+            ],
         )
 
 
 # ---------------------------------------------------------------------------
 # TR-001: criar_requisicao — dados inválidos
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_criar_requisicao_sem_itens(solicitante):
@@ -119,7 +166,12 @@ def test_criar_requisicao_material_inativo(solicitante, material_inativo):
         criar_requisicao(
             ator_id=solicitante.pk,
             beneficiario_id=solicitante.pk,
-            itens=[{'material_id': material_inativo.pk, 'quantidade_solicitada': Decimal('1')}],
+            itens=[
+                {
+                    'material_id': material_inativo.pk,
+                    'quantidade_solicitada': Decimal('1'),
+                }
+            ],
         )
 
 
@@ -129,7 +181,12 @@ def test_criar_requisicao_material_sem_saldo(solicitante, material_sem_saldo):
         criar_requisicao(
             ator_id=solicitante.pk,
             beneficiario_id=solicitante.pk,
-            itens=[{'material_id': material_sem_saldo.pk, 'quantidade_solicitada': Decimal('1')}],
+            itens=[
+                {
+                    'material_id': material_sem_saldo.pk,
+                    'quantidade_solicitada': Decimal('1'),
+                }
+            ],
         )
 
 
@@ -139,7 +196,12 @@ def test_criar_requisicao_material_divergente(solicitante, material_divergente):
         criar_requisicao(
             ator_id=solicitante.pk,
             beneficiario_id=solicitante.pk,
-            itens=[{'material_id': material_divergente.pk, 'quantidade_solicitada': Decimal('1')}],
+            itens=[
+                {
+                    'material_id': material_divergente.pk,
+                    'quantidade_solicitada': Decimal('1'),
+                }
+            ],
         )
 
 
@@ -149,18 +211,30 @@ def test_criar_requisicao_quantidade_zero(solicitante, material_disponivel):
         criar_requisicao(
             ator_id=solicitante.pk,
             beneficiario_id=solicitante.pk,
-            itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('0')}],
+            itens=[
+                {
+                    'material_id': material_disponivel.pk,
+                    'quantidade_solicitada': Decimal('0'),
+                }
+            ],
         )
 
 
 @pytest.mark.django_db
-def test_criar_requisicao_beneficiario_sem_setor(solicitante, usuario_sem_setor, material_disponivel):
+def test_criar_requisicao_beneficiario_sem_setor(
+    solicitante, usuario_sem_setor, material_disponivel
+):
     # Beneficiário sem setor é rejeitado na policy (pode_criar_para_beneficiario→False → PermissaoNegada)
     with pytest.raises(PermissaoNegada):
         criar_requisicao(
             ator_id=solicitante.pk,
             beneficiario_id=usuario_sem_setor.pk,
-            itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('1')}],
+            itens=[
+                {
+                    'material_id': material_disponivel.pk,
+                    'quantidade_solicitada': Decimal('1'),
+                }
+            ],
         )
 
 
@@ -171,8 +245,14 @@ def test_criar_requisicao_material_duplicado(solicitante, material_disponivel):
             ator_id=solicitante.pk,
             beneficiario_id=solicitante.pk,
             itens=[
-                {'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('1')},
-                {'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('2')},
+                {
+                    'material_id': material_disponivel.pk,
+                    'quantidade_solicitada': Decimal('1'),
+                },
+                {
+                    'material_id': material_disponivel.pk,
+                    'quantidade_solicitada': Decimal('2'),
+                },
             ],
         )
 
@@ -181,24 +261,38 @@ def test_criar_requisicao_material_duplicado(solicitante, material_disponivel):
 # TR-002: editar_rascunho — caminho feliz
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def rascunho(db, solicitante, setor_obras, material_disponivel):
     req = criar_requisicao(
         ator_id=solicitante.pk,
         beneficiario_id=solicitante.pk,
-        itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('3')}],
+        itens=[
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('3'),
+            }
+        ],
     )
     return req
 
 
 @pytest.mark.django_db
-def test_editar_rascunho_atualiza_itens(rascunho, solicitante, material_disponivel, material_disponivel_2):
+def test_editar_rascunho_atualiza_itens(
+    rascunho, solicitante, material_disponivel, material_disponivel_2
+):
     editar_rascunho(
         ator_id=solicitante.pk,
         requisicao_id=rascunho.pk,
         itens=[
-            {'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('10')},
-            {'material_id': material_disponivel_2.pk, 'quantidade_solicitada': Decimal('5')},
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('10'),
+            },
+            {
+                'material_id': material_disponivel_2.pk,
+                'quantidade_solicitada': Decimal('5'),
+            },
         ],
     )
     rascunho.refresh_from_db()
@@ -208,11 +302,18 @@ def test_editar_rascunho_atualiza_itens(rascunho, solicitante, material_disponiv
 
 
 @pytest.mark.django_db
-def test_editar_rascunho_atualiza_observacao(rascunho, solicitante, material_disponivel):
+def test_editar_rascunho_atualiza_observacao(
+    rascunho, solicitante, material_disponivel
+):
     editar_rascunho(
         ator_id=solicitante.pk,
         requisicao_id=rascunho.pk,
-        itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('1')}],
+        itens=[
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('1'),
+            }
+        ],
         observacao_geral='Nova observação.',
     )
     rascunho.refresh_from_db()
@@ -220,13 +321,20 @@ def test_editar_rascunho_atualiza_observacao(rascunho, solicitante, material_dis
 
 
 @pytest.mark.django_db
-def test_editar_rascunho_nao_altera_beneficiario(rascunho, solicitante, material_disponivel, setor_obras):
+def test_editar_rascunho_nao_altera_beneficiario(
+    rascunho, solicitante, material_disponivel, setor_obras
+):
     beneficiario_original = rascunho.beneficiario_id
     setor_original = rascunho.setor_beneficiario_id
     editar_rascunho(
         ator_id=solicitante.pk,
         requisicao_id=rascunho.pk,
-        itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('2')}],
+        itens=[
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('2'),
+            }
+        ],
     )
     rascunho.refresh_from_db()
     assert rascunho.beneficiario_id == beneficiario_original
@@ -237,19 +345,28 @@ def test_editar_rascunho_nao_altera_beneficiario(rascunho, solicitante, material
 # TR-002: editar_rascunho — permissão negada
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
-def test_editar_rascunho_nao_criador_levanta_permissao_negada(rascunho, outro_usuario_obras, material_disponivel):
+def test_editar_rascunho_nao_criador_levanta_permissao_negada(
+    rascunho, outro_usuario_obras, material_disponivel
+):
     with pytest.raises(PermissaoNegada):
         editar_rascunho(
             ator_id=outro_usuario_obras.pk,
             requisicao_id=rascunho.pk,
-            itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('1')}],
+            itens=[
+                {
+                    'material_id': material_disponivel.pk,
+                    'quantidade_solicitada': Decimal('1'),
+                }
+            ],
         )
 
 
 # ---------------------------------------------------------------------------
 # TR-002: editar_rascunho — estado inválido
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_editar_rascunho_estado_invalido(solicitante, setor_obras, material_disponivel):
@@ -265,5 +382,10 @@ def test_editar_rascunho_estado_invalido(solicitante, setor_obras, material_disp
         editar_rascunho(
             ator_id=solicitante.pk,
             requisicao_id=req.pk,
-            itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('1')}],
+            itens=[
+                {
+                    'material_id': material_disponivel.pk,
+                    'quantidade_solicitada': Decimal('1'),
+                }
+            ],
         )

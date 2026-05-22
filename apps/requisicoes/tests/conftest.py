@@ -14,24 +14,32 @@ from apps.estoque.models import Estoque, Material, SaldoEstoque, UnidadeMedida
 # Setores
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def setor_obras(db):
-    return Setor.objects.create(codigo='OBR', nome='Obras', classificacao=SetorClassificacao.COMUM)
+    return Setor.objects.create(
+        codigo='OBR', nome='Obras', classificacao=SetorClassificacao.COMUM
+    )
 
 
 @pytest.fixture
 def setor_ti(db):
-    return Setor.objects.create(codigo='TI', nome='TI', classificacao=SetorClassificacao.COMUM)
+    return Setor.objects.create(
+        codigo='TI', nome='TI', classificacao=SetorClassificacao.COMUM
+    )
 
 
 @pytest.fixture
 def setor_almoxarifado(db):
-    return Setor.objects.create(codigo='ALM', nome='Almoxarifado', classificacao=SetorClassificacao.ALMOXARIFADO)
+    return Setor.objects.create(
+        codigo='ALM', nome='Almoxarifado', classificacao=SetorClassificacao.ALMOXARIFADO
+    )
 
 
 # ---------------------------------------------------------------------------
 # Usuários
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def solicitante(db, setor_obras):
@@ -147,6 +155,7 @@ def usuario_inativo(db, setor_obras):
 # ---------------------------------------------------------------------------
 # Estoque e materiais
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def estoque_principal(db):

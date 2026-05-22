@@ -17,6 +17,7 @@ from apps.requisicoes.services import criar_requisicao
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _login(client, user, password='senha'):
     client.login(username=user.matricula, password=password)
 
@@ -41,6 +42,7 @@ def _formset_post(material_id, quantidade='5', extra=None):
 # GET /requisicoes/nova/
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_nova_requisicao_get_sem_login(client):
     url = reverse('requisicoes:nova_requisicao')
@@ -60,8 +62,11 @@ def test_nova_requisicao_get_com_login(client, solicitante):
 # POST /requisicoes/nova/
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
-def test_nova_requisicao_post_valido_cria_e_redireciona(client, solicitante, material_disponivel):
+def test_nova_requisicao_post_valido_cria_e_redireciona(
+    client, solicitante, material_disponivel
+):
     _login(client, solicitante)
     data = _formset_post(material_disponivel.pk)
     resp = client.post(reverse('requisicoes:nova_requisicao'), data)
@@ -70,7 +75,10 @@ def test_nova_requisicao_post_valido_cria_e_redireciona(client, solicitante, mat
     assert req is not None
     assert req.estado == EstadoRequisicao.RASCUNHO
     assert resp.status_code == 302
-    assert reverse('requisicoes:editar_rascunho', kwargs={'pk': req.pk}) in resp['Location']
+    assert (
+        reverse('requisicoes:editar_rascunho', kwargs={'pk': req.pk})
+        in resp['Location']
+    )
 
 
 @pytest.mark.django_db
@@ -92,7 +100,9 @@ def test_nova_requisicao_post_sem_itens_retorna_form(client, solicitante):
 
 
 @pytest.mark.django_db
-def test_nova_requisicao_post_forjado_beneficiario_fora_escopo(client, solicitante, usuario_ti, material_disponivel):
+def test_nova_requisicao_post_forjado_beneficiario_fora_escopo(
+    client, solicitante, usuario_ti, material_disponivel
+):
     """Solicitante com modo='proprio' não pode forjar beneficiario_id via POST.
 
     O form em modo 'proprio' remove os campos modo_criacao e beneficiario_id, de
@@ -100,10 +110,13 @@ def test_nova_requisicao_post_forjado_beneficiario_fora_escopo(client, solicitan
     requisição para o próprio solicitante e redireciona normalmente (302).
     """
     _login(client, solicitante)
-    data = _formset_post(material_disponivel.pk, extra={
-        'modo_criacao': 'other',
-        'beneficiario_id': str(usuario_ti.pk),
-    })
+    data = _formset_post(
+        material_disponivel.pk,
+        extra={
+            'modo_criacao': 'other',
+            'beneficiario_id': str(usuario_ti.pk),
+        },
+    )
     resp = client.post(reverse('requisicoes:nova_requisicao'), data)
     assert resp.status_code == 302
     req = Requisicao.objects.get(criador=solicitante)
@@ -111,7 +124,9 @@ def test_nova_requisicao_post_forjado_beneficiario_fora_escopo(client, solicitan
 
 
 @pytest.mark.django_db
-def test_nova_requisicao_post_chefe_cria_para_outro_setor_falha(client, chefe_obras, usuario_ti, material_disponivel):
+def test_nova_requisicao_post_chefe_cria_para_outro_setor_falha(
+    client, chefe_obras, usuario_ti, material_disponivel
+):
     """Chefe de setor não pode criar para usuário de outro setor.
 
     O beneficiário fora do escopo é rejeitado no ChoiceField do form (não está nas
@@ -119,10 +134,13 @@ def test_nova_requisicao_post_chefe_cria_para_outro_setor_falha(client, chefe_ob
     Não há message pois o service não chegou a ser chamado.
     """
     _login(client, chefe_obras)
-    data = _formset_post(material_disponivel.pk, extra={
-        'modo_criacao': 'other',
-        'beneficiario_id': str(usuario_ti.pk),
-    })
+    data = _formset_post(
+        material_disponivel.pk,
+        extra={
+            'modo_criacao': 'other',
+            'beneficiario_id': str(usuario_ti.pk),
+        },
+    )
     resp = client.post(reverse('requisicoes:nova_requisicao'), data)
     # Form inválido (beneficiário fora do escopo) → 200 sem redirect
     assert resp.status_code == 200
@@ -133,12 +151,18 @@ def test_nova_requisicao_post_chefe_cria_para_outro_setor_falha(client, chefe_ob
 # GET /requisicoes/<pk>/editar/
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def rascunho_solicitante(db, solicitante, material_disponivel):
     return criar_requisicao(
         ator_id=solicitante.pk,
         beneficiario_id=solicitante.pk,
-        itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('3')}],
+        itens=[
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('3'),
+            }
+        ],
     )
 
 
@@ -151,14 +175,20 @@ def test_editar_rascunho_get_sem_login(client, rascunho_solicitante):
 
 
 @pytest.mark.django_db
-def test_editar_rascunho_get_nao_criador_retorna_403(client, outro_usuario_obras, rascunho_solicitante):
+def test_editar_rascunho_get_nao_criador_retorna_403(
+    client, outro_usuario_obras, rascunho_solicitante
+):
     _login(client, outro_usuario_obras)
-    resp = client.get(reverse('requisicoes:editar_rascunho', kwargs={'pk': rascunho_solicitante.pk}))
+    resp = client.get(
+        reverse('requisicoes:editar_rascunho', kwargs={'pk': rascunho_solicitante.pk})
+    )
     assert resp.status_code == 403
 
 
 @pytest.mark.django_db
-def test_editar_rascunho_get_estado_diferente_retorna_403(client, solicitante, setor_obras):
+def test_editar_rascunho_get_estado_diferente_retorna_403(
+    client, solicitante, setor_obras
+):
     req = Requisicao.objects.create(
         estado=EstadoRequisicao.AGUARDANDO_AUTORIZACAO,
         numero_publico='REQ-2026-000099',
@@ -179,9 +209,13 @@ def test_editar_rascunho_get_pk_inexistente_retorna_404(client, solicitante):
 
 
 @pytest.mark.django_db
-def test_editar_rascunho_get_criador_retorna_200(client, solicitante, rascunho_solicitante):
+def test_editar_rascunho_get_criador_retorna_200(
+    client, solicitante, rascunho_solicitante
+):
     _login(client, solicitante)
-    resp = client.get(reverse('requisicoes:editar_rascunho', kwargs={'pk': rascunho_solicitante.pk}))
+    resp = client.get(
+        reverse('requisicoes:editar_rascunho', kwargs={'pk': rascunho_solicitante.pk})
+    )
     assert resp.status_code == 200
 
 
@@ -189,10 +223,17 @@ def test_editar_rascunho_get_criador_retorna_200(client, solicitante, rascunho_s
 # POST /requisicoes/<pk>/editar/
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
-def test_editar_rascunho_post_valido_salva_e_redireciona(client, solicitante, rascunho_solicitante, material_disponivel):
+def test_editar_rascunho_post_valido_salva_e_redireciona(
+    client, solicitante, rascunho_solicitante, material_disponivel
+):
     _login(client, solicitante)
-    data = _formset_post(material_disponivel.pk, quantidade='10', extra={'observacao_geral': 'Obs editada'})
+    data = _formset_post(
+        material_disponivel.pk,
+        quantidade='10',
+        extra={'observacao_geral': 'Obs editada'},
+    )
     resp = client.post(
         reverse('requisicoes:editar_rascunho', kwargs={'pk': rascunho_solicitante.pk}),
         data,
@@ -203,7 +244,9 @@ def test_editar_rascunho_post_valido_salva_e_redireciona(client, solicitante, ra
 
 
 @pytest.mark.django_db
-def test_editar_rascunho_post_material_inativo_retorna_200_com_erro(client, solicitante, rascunho_solicitante, material_inativo):
+def test_editar_rascunho_post_material_inativo_retorna_200_com_erro(
+    client, solicitante, rascunho_solicitante, material_inativo
+):
     _login(client, solicitante)
     data = _formset_post(material_inativo.pk)
     resp = client.post(
@@ -216,6 +259,7 @@ def test_editar_rascunho_post_material_inativo_retorna_200_com_erro(client, soli
 # ---------------------------------------------------------------------------
 # GET /requisicoes/materiais/busca/
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_buscar_materiais_sem_login(client):
@@ -242,7 +286,9 @@ def test_buscar_materiais_nao_retorna_inativo(client, solicitante, material_inat
 
 
 @pytest.mark.django_db
-def test_buscar_materiais_nao_retorna_sem_saldo(client, solicitante, material_sem_saldo):
+def test_buscar_materiais_nao_retorna_sem_saldo(
+    client, solicitante, material_sem_saldo
+):
     _login(client, solicitante)
     resp = client.get(reverse('requisicoes:buscar_materiais'), {'q': 'Prego'})
     data = resp.json()

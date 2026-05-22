@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 from django.db import transaction
 
 from apps.accounts.models import User
-from apps.core.exceptions import DadosInvalidos, EstadoInvalido
+from apps.core.exceptions import DadosInvalidos
 from apps.estoque.models import Material
 from apps.requisicoes.models import (
     EstadoRequisicao,
@@ -49,6 +49,7 @@ ItemInput = dict  # {'material_id': int, 'quantidade_solicitada': Decimal}
 # TR-001: criar requisição
 # ---------------------------------------------------------------------------
 
+
 @transaction.atomic
 def criar_requisicao(
     *,
@@ -71,17 +72,18 @@ def criar_requisicao(
     # Beneficiário precisa ter setor (snapshot)
     if not pode_ser_beneficiario(beneficiario):
         raise DadosInvalidos(
-            f"{beneficiario.nome} não pode ser beneficiário: usuário inativo ou sem setor.",
-            code="beneficiario_inelegivel",
+            f'{beneficiario.nome} não pode ser beneficiário: usuário inativo ou sem setor.',
+            code='beneficiario_inelegivel',
         )
 
     setor_beneficiario = beneficiario.setor
+    assert setor_beneficiario is not None  # garantido por pode_ser_beneficiario acima
 
     # Validar itens
     if not itens:
         raise DadosInvalidos(
-            "A requisição precisa ter ao menos um item.",
-            code="sem_itens",
+            'A requisição precisa ter ao menos um item.',
+            code='sem_itens',
         )
 
     _validar_itens(itens)
@@ -97,14 +99,16 @@ def criar_requisicao(
     )
 
     # Criar itens
-    ItemRequisicao.objects.bulk_create([
-        ItemRequisicao(
-            requisicao=requisicao,
-            material_id=item['material_id'],
-            quantidade_solicitada=item['quantidade_solicitada'],
-        )
-        for item in itens
-    ])
+    ItemRequisicao.objects.bulk_create(
+        [
+            ItemRequisicao(
+                requisicao=requisicao,
+                material_id=item['material_id'],
+                quantidade_solicitada=item['quantidade_solicitada'],
+            )
+            for item in itens
+        ]
+    )
 
     # Timeline
     TimelineRequisicao.objects.create(
@@ -120,6 +124,7 @@ def criar_requisicao(
 # ---------------------------------------------------------------------------
 # TR-002: editar rascunho
 # ---------------------------------------------------------------------------
+
 
 @transaction.atomic
 def editar_rascunho(
@@ -146,22 +151,24 @@ def editar_rascunho(
     # Validar itens
     if not itens:
         raise DadosInvalidos(
-            "A requisição precisa ter ao menos um item.",
-            code="sem_itens",
+            'A requisição precisa ter ao menos um item.',
+            code='sem_itens',
         )
 
     _validar_itens(itens)
 
     # Substituir itens atomicamente
     requisicao.itens.all().delete()
-    ItemRequisicao.objects.bulk_create([
-        ItemRequisicao(
-            requisicao=requisicao,
-            material_id=item['material_id'],
-            quantidade_solicitada=item['quantidade_solicitada'],
-        )
-        for item in itens
-    ])
+    ItemRequisicao.objects.bulk_create(
+        [
+            ItemRequisicao(
+                requisicao=requisicao,
+                material_id=item['material_id'],
+                quantidade_solicitada=item['quantidade_solicitada'],
+            )
+            for item in itens
+        ]
+    )
 
     # Atualizar campos editáveis
     requisicao.observacao_geral = observacao_geral
@@ -174,6 +181,7 @@ def editar_rascunho(
 # Helpers internos
 # ---------------------------------------------------------------------------
 
+
 def _validar_itens(itens: list[ItemInput]) -> None:
     """Valida elegibilidade e quantidade de cada item.
 
@@ -184,8 +192,8 @@ def _validar_itens(itens: list[ItemInput]) -> None:
     # Detectar duplicidade
     if len(material_ids) != len(set(material_ids)):
         raise DadosInvalidos(
-            "A requisição não pode ter o mesmo material mais de uma vez.",
-            code="material_duplicado",
+            'A requisição não pode ter o mesmo material mais de uma vez.',
+            code='material_duplicado',
         )
 
     materiais = {m.pk: m for m in Material.objects.filter(pk__in=material_ids)}
@@ -194,25 +202,25 @@ def _validar_itens(itens: list[ItemInput]) -> None:
         material = materiais.get(item['material_id'])
         if material is None:
             raise DadosInvalidos(
-                "Material não encontrado.",
-                code="material_nao_encontrado",
+                'Material não encontrado.',
+                code='material_nao_encontrado',
             )
 
         quantidade = Decimal(str(item['quantidade_solicitada']))
         if quantidade <= 0:
             raise DadosInvalidos(
                 f"Quantidade solicitada de '{material.nome}' deve ser maior que zero.",
-                code="quantidade_invalida",
+                code='quantidade_invalida',
             )
 
         if not material.ativo:
             raise DadosInvalidos(
                 f"Material '{material.nome}' está inativo e não pode ser requisitado.",
-                code="material_inativo",
+                code='material_inativo',
             )
 
         if not material_eh_elegivel(material):
             raise DadosInvalidos(
                 f"Material '{material.nome}' não tem saldo disponível ou possui divergência crítica.",
-                code="material_sem_saldo",
+                code='material_sem_saldo',
             )

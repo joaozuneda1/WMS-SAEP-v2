@@ -26,5 +26,5 @@ def verificar_transicao_valida(de: str, para: str) -> None:
     if para not in destinos_permitidos:
         raise EstadoInvalido(
             f"Transição de '{de}' para '{para}' não é permitida.",
-            code="transicao_invalida",
+            code='transicao_invalida',
         )

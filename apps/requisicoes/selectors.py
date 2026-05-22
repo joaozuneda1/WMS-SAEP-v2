@@ -33,6 +33,4 @@ def material_eh_elegivel(material: Material) -> bool:
     """
     if not material.ativo:
         return False
-    return material.saldos.filter(
-        saldo_fisico__gt=F('saldo_reservado')
-    ).exists()
+    return material.saldos.filter(saldo_fisico__gt=F('saldo_reservado')).exists()

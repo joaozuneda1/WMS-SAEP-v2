@@ -3,9 +3,6 @@
 from django import forms
 from django.forms import BaseFormSet, formset_factory
 
-from apps.estoque.models import Material
-from apps.requisicoes.models import ItemRequisicao, Requisicao
-
 
 class RequisicaoForm(forms.Form):
     """Campos editáveis do cabeçalho de rascunho."""
@@ -13,7 +10,12 @@ class RequisicaoForm(forms.Form):
     observacao_geral = forms.CharField(
         label='Observação geral',
         required=False,
-        widget=forms.Textarea(attrs={'rows': 3, 'class': 'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'}),
+        widget=forms.Textarea(
+            attrs={
+                'rows': 3,
+                'class': 'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none',
+            }
+        ),
     )
 
 
@@ -38,7 +40,9 @@ class RequisicaoCriacaoForm(RequisicaoForm):
         widget=forms.HiddenInput(),
     )
 
-    def __init__(self, *args, modo_beneficiario='proprio', beneficiarios=None, **kwargs):
+    def __init__(
+        self, *args, modo_beneficiario='proprio', beneficiarios=None, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.modo_beneficiario = modo_beneficiario
 
@@ -56,7 +60,11 @@ class RequisicaoCriacaoForm(RequisicaoForm):
                 label='Beneficiário',
                 required=False,
                 choices=choices,
-                widget=forms.Select(attrs={'class': 'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'}),
+                widget=forms.Select(
+                    attrs={
+                        'class': 'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                    }
+                ),
             )
 
     def clean(self):
@@ -87,21 +95,25 @@ class ItemRequisicaoForm(forms.Form):
     material_label = forms.CharField(
         label='Material',
         required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'material-autocomplete w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none',
-            'autocomplete': 'off',
-            'placeholder': 'Buscar por código ou nome...',
-        }),
+        widget=forms.TextInput(
+            attrs={
+                'class': 'material-autocomplete w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none',
+                'autocomplete': 'off',
+                'placeholder': 'Buscar por código ou nome...',
+            }
+        ),
     )
     quantidade_solicitada = forms.IntegerField(
         label='Quantidade',
         min_value=1,
         required=False,
-        widget=forms.NumberInput(attrs={
-            'class': 'w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none',
-            'step': '1',
-            'min': '1',
-        }),
+        widget=forms.NumberInput(
+            attrs={
+                'class': 'w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none',
+                'step': '1',
+                'min': '1',
+            }
+        ),
     )
 
     def clean(self):
@@ -117,7 +129,9 @@ class ItemRequisicaoForm(forms.Form):
         if not material_id:
             self.add_error('material_label', 'Selecione um material.')
         if not quantidade or quantidade <= 0:
-            self.add_error('quantidade_solicitada', 'Informe uma quantidade maior que zero.')
+            self.add_error(
+                'quantidade_solicitada', 'Informe uma quantidade maior que zero.'
+            )
 
         return cleaned_data
 
@@ -161,13 +175,13 @@ class BaseItemRequisicaoFormSet(BaseFormSet):
             material_ids.append(material_id)
 
         if linhas_validas == 0:
-            raise forms.ValidationError(
-                'A requisição precisa ter ao menos um item.'
-            )
+            raise forms.ValidationError('A requisição precisa ter ao menos um item.')
 
     def _form_deletado(self, form) -> bool:
         """True se o form foi marcado para deleção (via campo DELETE do formset)."""
-        return self.can_delete and form.cleaned_data.get(forms.formsets.DELETION_FIELD_NAME, False)
+        return self.can_delete and form.cleaned_data.get(
+            forms.formsets.DELETION_FIELD_NAME, False
+        )
 
     def linhas_validas(self) -> list[dict]:
         """Retorna lista de dicts com material_id e quantidade_solicitada dos itens válidos."""
@@ -177,10 +191,12 @@ class BaseItemRequisicaoFormSet(BaseFormSet):
                 continue
             if not form.cleaned_data or not form.is_linha_valida():
                 continue
-            resultado.append({
-                'material_id': form.cleaned_data['material_id'],
-                'quantidade_solicitada': form.cleaned_data['quantidade_solicitada'],
-            })
+            resultado.append(
+                {
+                    'material_id': form.cleaned_data['material_id'],
+                    'quantidade_solicitada': form.cleaned_data['quantidade_solicitada'],
+                }
+            )
         return resultado
 
 

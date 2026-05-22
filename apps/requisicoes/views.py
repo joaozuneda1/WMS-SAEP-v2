@@ -41,6 +41,7 @@ def _htmx_redirect(request, url: str) -> HttpResponse:
 # Nova requisição — TR-001
 # ---------------------------------------------------------------------------
 
+
 @login_required
 @require_http_methods(['GET', 'POST'])
 def nova_requisicao(request):
@@ -86,12 +87,16 @@ def nova_requisicao(request):
                 )
                 return redirect('requisicoes:editar_rascunho', pk=req.pk)
 
-        return render(request, 'requisicoes/rascunho_form.html', {
-            'form': form,
-            'formset': formset,
-            'modo': 'criar',
-            'escopo': escopo,
-        })
+        return render(
+            request,
+            'requisicoes/rascunho_form.html',
+            {
+                'form': form,
+                'formset': formset,
+                'modo': 'criar',
+                'escopo': escopo,
+            },
+        )
 
     # GET
     form = RequisicaoCriacaoForm(
@@ -99,17 +104,22 @@ def nova_requisicao(request):
         beneficiarios=escopo.beneficiarios,
     )
     formset = ItemRequisicaoFormSet(prefix='itens', initial=[{}])
-    return render(request, 'requisicoes/rascunho_form.html', {
-        'form': form,
-        'formset': formset,
-        'modo': 'criar',
-        'escopo': escopo,
-    })
+    return render(
+        request,
+        'requisicoes/rascunho_form.html',
+        {
+            'form': form,
+            'formset': formset,
+            'modo': 'criar',
+            'escopo': escopo,
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
 # Editar rascunho — TR-002
 # ---------------------------------------------------------------------------
+
 
 @login_required
 @require_http_methods(['GET', 'POST'])
@@ -147,12 +157,16 @@ def editar_rascunho_view(request, pk: int):
                 messages.success(request, 'Rascunho salvo com sucesso.')
                 return redirect('requisicoes:editar_rascunho', pk=requisicao.pk)
 
-        return render(request, 'requisicoes/rascunho_form.html', {
-            'form': form,
-            'formset': formset,
-            'modo': 'editar',
-            'requisicao': requisicao,
-        })
+        return render(
+            request,
+            'requisicoes/rascunho_form.html',
+            {
+                'form': form,
+                'formset': formset,
+                'modo': 'editar',
+                'requisicao': requisicao,
+            },
+        )
 
     # GET — preencher com itens existentes
     itens_existentes = list(requisicao.itens.select_related('material').all())
@@ -160,24 +174,31 @@ def editar_rascunho_view(request, pk: int):
         {
             'material_id': item.material_id,
             'material_label': str(item.material),
-            'quantidade_solicitada': int(item.quantidade_solicitada) if item.quantidade_solicitada else '',
+            'quantidade_solicitada': int(item.quantidade_solicitada)
+            if item.quantidade_solicitada
+            else '',
         }
         for item in itens_existentes
     ]
     form = RequisicaoForm(initial={'observacao_geral': requisicao.observacao_geral})
     formset = ItemRequisicaoFormSet(prefix='itens', initial=initial or [{}])
 
-    return render(request, 'requisicoes/rascunho_form.html', {
-        'form': form,
-        'formset': formset,
-        'modo': 'editar',
-        'requisicao': requisicao,
-    })
+    return render(
+        request,
+        'requisicoes/rascunho_form.html',
+        {
+            'form': form,
+            'formset': formset,
+            'modo': 'editar',
+            'requisicao': requisicao,
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
 # HTMX: nova linha de item
 # ---------------------------------------------------------------------------
+
 
 @login_required
 @require_GET
@@ -190,16 +211,21 @@ def nova_linha_item(request):
 
     # Usa o empty_form do formset para garantir prefixo correto
     fs = ItemRequisicaoFormSet(prefix='itens')
-    return render(request, 'requisicoes/partials/_item_form_row.html', {
-        'form': fs.empty_form,
-        'form_index': index,
-        'prefix': f'itens-{index}',
-    })
+    return render(
+        request,
+        'requisicoes/partials/_item_form_row.html',
+        {
+            'form': fs.empty_form,
+            'form_index': index,
+            'prefix': f'itens-{index}',
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
 # JSON: autocomplete de materiais
 # ---------------------------------------------------------------------------
+
 
 @login_required
 @require_GET
@@ -208,7 +234,9 @@ def buscar_materiais(request):
     try:
         resolver_escopo_criacao_requisicao(request.user)
     except PermissaoNegada:
-        return JsonResponse({'error': 'Sem permissão para buscar materiais.'}, status=403)
+        return JsonResponse(
+            {'error': 'Sem permissão para buscar materiais.'}, status=403
+        )
 
     q = request.GET.get('q', '').strip()
     materiais = list(materiais_para_requisicao(q=q, limite=20))
@@ -216,13 +244,15 @@ def buscar_materiais(request):
 
     saldo_por_material: dict = {}
     if material_ids:
-        for row in SaldoEstoque.objects.filter(
-            material_id__in=material_ids
-        ).values('material_id').annotate(
-            disponivel=Sum(
-                ExpressionWrapper(
-                    F('saldo_fisico') - F('saldo_reservado'),
-                    output_field=DecimalField(),
+        for row in (
+            SaldoEstoque.objects.filter(material_id__in=material_ids)
+            .values('material_id')
+            .annotate(
+                disponivel=Sum(
+                    ExpressionWrapper(
+                        F('saldo_fisico') - F('saldo_reservado'),
+                        output_field=DecimalField(),
+                    )
                 )
             )
         ):

@@ -20,6 +20,7 @@ from apps.requisicoes.policies import (
 # pode_ser_beneficiario
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_pode_ser_beneficiario_ativo_com_setor(solicitante):
     assert pode_ser_beneficiario(solicitante) is True
@@ -38,6 +39,7 @@ def test_pode_ser_beneficiario_sem_setor(usuario_sem_setor):
 # ---------------------------------------------------------------------------
 # resolver_escopo_criacao_requisicao — modo
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_escopo_solicitante_puro(solicitante):
@@ -81,7 +83,9 @@ def test_escopo_chefe_almoxarifado(chefe_almoxarifado):
 
 
 @pytest.mark.django_db
-def test_escopo_precedencia_chefe_setor_mais_aux_almox(db, setor_obras, setor_almoxarifado):
+def test_escopo_precedencia_chefe_setor_mais_aux_almox(
+    db, setor_obras, setor_almoxarifado
+):
     """Usuário com papel de chefe em setor comum E auxiliar de almox → modo=qualquer."""
     u = __import__('apps.accounts.models', fromlist=['User']).User.objects.create_user(
         matricula='DUP01', nome='Duplo Papel', password='senha', setor=setor_obras
@@ -95,7 +99,9 @@ def test_escopo_precedencia_chefe_setor_mais_aux_almox(db, setor_obras, setor_al
 
 
 @pytest.mark.django_db
-def test_escopo_ator_com_papel_funcional_sem_setor_pode_criar_para_si_false(db, setor_almoxarifado):
+def test_escopo_ator_com_papel_funcional_sem_setor_pode_criar_para_si_false(
+    db, setor_almoxarifado
+):
     """Ator com vínculo de almox mas setor=None → pode_criar_para_si=False."""
     u = __import__('apps.accounts.models', fromlist=['User']).User.objects.create_user(
         matricula='NST01', nome='Sem Setor Almox', password='senha', setor=None
@@ -111,8 +117,11 @@ def test_escopo_ator_com_papel_funcional_sem_setor_pode_criar_para_si_false(db, 
 # Queryset de beneficiários por modo
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
-def test_escopo_setor_exclui_proprio_ator(chefe_obras, setor_obras, outro_usuario_obras):
+def test_escopo_setor_exclui_proprio_ator(
+    chefe_obras, setor_obras, outro_usuario_obras
+):
     escopo = resolver_escopo_criacao_requisicao(chefe_obras)
     ids = set(escopo.beneficiarios.values_list('pk', flat=True))
     assert chefe_obras.pk not in ids
@@ -137,6 +146,7 @@ def test_escopo_qualquer_exclui_proprio_ator(aux_almoxarifado, solicitante):
 # ---------------------------------------------------------------------------
 # pode_criar_para_beneficiario
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_pode_criar_para_si(solicitante):
@@ -169,13 +179,16 @@ def test_nao_pode_criar_para_beneficiario_inativo(solicitante, usuario_inativo):
 
 
 @pytest.mark.django_db
-def test_nao_pode_criar_para_beneficiario_sem_setor(aux_almoxarifado, usuario_sem_setor):
+def test_nao_pode_criar_para_beneficiario_sem_setor(
+    aux_almoxarifado, usuario_sem_setor
+):
     assert pode_criar_para_beneficiario(aux_almoxarifado, usuario_sem_setor) is False
 
 
 # ---------------------------------------------------------------------------
 # pode_editar_rascunho
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_criador_pode_editar_rascunho(solicitante, setor_obras, material_disponivel):

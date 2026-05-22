@@ -23,12 +23,16 @@ if TYPE_CHECKING:
 # Funções auxiliares de derivação de papel
 # ---------------------------------------------------------------------------
 
+
 def _eh_almoxarifado(usuario: User) -> bool:
     """True se o usuário tem papel ativo de chefe ou auxiliar de almoxarifado."""
     # Chefe de almoxarifado
     try:
         setor_chefiado = usuario.setor_chefiado
-        if setor_chefiado.classificacao == SetorClassificacao.ALMOXARIFADO and setor_chefiado.ativo:
+        if (
+            setor_chefiado.classificacao == SetorClassificacao.ALMOXARIFADO
+            and setor_chefiado.ativo
+        ):
             return True
     except Exception:
         pass
@@ -55,11 +59,15 @@ def _setores_escopo_setor(usuario: User) -> list[int]:
     except Exception:
         pass
     # Auxiliares de setor não-almox
-    vinculos = VinculoAuxiliar.objects.filter(
-        usuario=usuario,
-        ativo=True,
-        setor__ativo=True,
-    ).exclude(setor__classificacao=SetorClassificacao.ALMOXARIFADO).values_list('setor_id', flat=True)
+    vinculos = (
+        VinculoAuxiliar.objects.filter(
+            usuario=usuario,
+            ativo=True,
+            setor__ativo=True,
+        )
+        .exclude(setor__classificacao=SetorClassificacao.ALMOXARIFADO)
+        .values_list('setor_id', flat=True)
+    )
     ids.update(vinculos)
     return list(ids)
 
@@ -67,6 +75,7 @@ def _setores_escopo_setor(usuario: User) -> list[int]:
 # ---------------------------------------------------------------------------
 # pode_ser_beneficiario
 # ---------------------------------------------------------------------------
+
 
 def pode_ser_beneficiario(usuario: User) -> bool:
     """True se o usuário pode ser beneficiário de uma requisição.
@@ -80,6 +89,7 @@ def pode_ser_beneficiario(usuario: User) -> bool:
 # ---------------------------------------------------------------------------
 # Escopo de criação
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class EscopoCriacaoRequisicao:
@@ -100,15 +110,17 @@ def resolver_escopo_criacao_requisicao(ator: User) -> EscopoCriacaoRequisicao:
     from apps.accounts.models import User as UserModel
 
     if not ator.is_active:
-        raise PermissaoNegada("Usuário inativo não pode criar requisições.")
+        raise PermissaoNegada('Usuário inativo não pode criar requisições.')
 
     pode_criar_para_si = pode_ser_beneficiario(ator)
 
     # Superusuário → escopo total
     if ator.is_superuser:
-        qs = UserModel.objects.filter(
-            is_active=True, setor__isnull=False
-        ).exclude(pk=ator.pk).select_related('setor')
+        qs = (
+            UserModel.objects.filter(is_active=True, setor__isnull=False)
+            .exclude(pk=ator.pk)
+            .select_related('setor')
+        )
         return EscopoCriacaoRequisicao(
             modo_beneficiario='qualquer',
             pode_criar_para_si=pode_criar_para_si,
@@ -118,9 +130,11 @@ def resolver_escopo_criacao_requisicao(ator: User) -> EscopoCriacaoRequisicao:
 
     # Almoxarifado (chefe ou auxiliar) → qualquer setor
     if _eh_almoxarifado(ator):
-        qs = UserModel.objects.filter(
-            is_active=True, setor__isnull=False
-        ).exclude(pk=ator.pk).select_related('setor')
+        qs = (
+            UserModel.objects.filter(is_active=True, setor__isnull=False)
+            .exclude(pk=ator.pk)
+            .select_related('setor')
+        )
         return EscopoCriacaoRequisicao(
             modo_beneficiario='qualquer',
             pode_criar_para_si=pode_criar_para_si,
@@ -131,11 +145,15 @@ def resolver_escopo_criacao_requisicao(ator: User) -> EscopoCriacaoRequisicao:
     # Chefe ou auxiliar de setor não-almox → escopo restrito ao(s) setor(es)
     setores_ids = _setores_escopo_setor(ator)
     if setores_ids:
-        qs = UserModel.objects.filter(
-            is_active=True,
-            setor__isnull=False,
-            setor__in=setores_ids,
-        ).exclude(pk=ator.pk).select_related('setor')
+        qs = (
+            UserModel.objects.filter(
+                is_active=True,
+                setor__isnull=False,
+                setor__in=setores_ids,
+            )
+            .exclude(pk=ator.pk)
+            .select_related('setor')
+        )
         return EscopoCriacaoRequisicao(
             modo_beneficiario='setor',
             pode_criar_para_si=pode_criar_para_si,
@@ -146,8 +164,8 @@ def resolver_escopo_criacao_requisicao(ator: User) -> EscopoCriacaoRequisicao:
     # Solicitante puro → apenas para si
     if not pode_criar_para_si:
         raise PermissaoNegada(
-            "Usuário sem setor não pode criar requisições.",
-            code="sem_setor",
+            'Usuário sem setor não pode criar requisições.',
+            code='sem_setor',
         )
     return EscopoCriacaoRequisicao(
         modo_beneficiario='proprio',
@@ -160,6 +178,7 @@ def resolver_escopo_criacao_requisicao(ator: User) -> EscopoCriacaoRequisicao:
 # ---------------------------------------------------------------------------
 # pode_criar_para_beneficiario
 # ---------------------------------------------------------------------------
+
 
 def pode_criar_para_beneficiario(ator: User, beneficiario: User) -> bool:
     """True se o ator pode criar requisição para o beneficiário dado."""
@@ -182,14 +201,15 @@ def pode_criar_para_beneficiario(ator: User, beneficiario: User) -> bool:
 def exigir_pode_criar_para_beneficiario(ator: User, beneficiario: User) -> None:
     if not pode_criar_para_beneficiario(ator, beneficiario):
         raise PermissaoNegada(
-            f"Você não tem permissão para criar requisições em nome de {beneficiario.nome}.",
-            code="beneficiario_fora_do_escopo",
+            f'Você não tem permissão para criar requisições em nome de {beneficiario.nome}.',
+            code='beneficiario_fora_do_escopo',
         )
 
 
 # ---------------------------------------------------------------------------
 # pode_editar_rascunho
 # ---------------------------------------------------------------------------
+
 
 def pode_editar_rascunho(ator: User, requisicao: Requisicao) -> bool:
     """True se o ator é o criador da requisição.
@@ -203,6 +223,6 @@ def pode_editar_rascunho(ator: User, requisicao: Requisicao) -> bool:
 def exigir_pode_editar_rascunho(ator: User, requisicao: Requisicao) -> None:
     if not pode_editar_rascunho(ator, requisicao):
         raise PermissaoNegada(
-            "Apenas o criador pode editar um rascunho.",
-            code="editar_rascunho_negado",
+            'Apenas o criador pode editar um rascunho.',
+            code='editar_rascunho_negado',
         )
