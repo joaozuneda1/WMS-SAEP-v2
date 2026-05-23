@@ -15,6 +15,28 @@
         <span class="site-header-name" translate="no">WMS-SAEP</span>
       </div>
 
+      {# Navegação principal #}
+      {% if user.is_authenticated %}
+        {% with current=request.resolver_match.view_name %}
+          <nav class="site-nav" aria-label="Navegação principal">
+            <a
+              href="{% url 'requisicoes:minhas' %}"
+              class="site-nav-link"
+              {% if current == 'requisicoes:minhas' %}aria-current="page"{% endif %}
+            >
+              Minhas requisições
+            </a>
+            <a
+              href="{% url 'requisicoes:nova_requisicao' %}"
+              class="site-nav-link"
+              {% if current == 'requisicoes:nova_requisicao' %}aria-current="page"{% endif %}
+            >
+              Nova requisição
+            </a>
+          </nav>
+        {% endwith %}
+      {% endif %}
+
       {# Contexto de sessão #}
       {% if user.is_authenticated %}
         <div class="site-header-user">
