@@ -1,0 +1,29 @@
+{% comment %}
+Feed de timeline da requisição. Mais recente primeiro.
+Parâmetro: eventos (lista de TimelineRequisicao com select_related('ator')).
+{% endcomment %}
+{% if eventos %}
+  <ol class="space-y-4" aria-label="Histórico da requisição">
+    {% for evento in eventos %}
+      <li class="flex gap-4 border-l-2 border-slate-200 pl-4">
+        <div class="flex-1">
+          <div class="flex items-baseline gap-2 flex-wrap">
+            <span class="text-sm font-medium text-slate-900">{{ evento.get_evento_display }}</span>
+            <span class="text-xs text-slate-500">
+              {{ evento.criado_em|date:"d/m/Y H:i" }}
+            </span>
+          </div>
+          <p class="text-sm text-slate-600 mt-0.5">
+            {{ evento.ator.nome }}
+            <span class="text-slate-400">({{ evento.ator.matricula }})</span>
+          </p>
+          {% if evento.justificativa %}
+            <p class="text-xs text-slate-500 mt-1 italic">{{ evento.justificativa }}</p>
+          {% endif %}
+        </div>
+      </li>
+    {% endfor %}
+  </ol>
+{% else %}
+  <p class="text-sm text-slate-500">Sem eventos registrados.</p>
+{% endif %}

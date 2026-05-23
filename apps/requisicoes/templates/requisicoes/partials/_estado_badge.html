@@ -1,0 +1,21 @@
+{% comment %}
+Badge de estado da requisição. Mapeia EstadoRequisicao -> cor + label.
+Parâmetro: requisicao (instância com .estado e .get_estado_display).
+{% endcomment %}
+{% with estado=requisicao.estado %}
+  {% if estado == 'rascunho' %}
+    <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">{{ requisicao.get_estado_display }}</span>
+  {% elif estado == 'aguardando_autorizacao' %}
+    <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">{{ requisicao.get_estado_display }}</span>
+  {% elif estado == 'autorizada' or estado == 'pronta_para_retirada' %}
+    <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">{{ requisicao.get_estado_display }}</span>
+  {% elif estado == 'atendida' %}
+    <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">{{ requisicao.get_estado_display }}</span>
+  {% elif estado == 'recusada' or estado == 'cancelada' %}
+    <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">{{ requisicao.get_estado_display }}</span>
+  {% elif estado == 'estornada' %}
+    <span class="inline-flex items-center rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-medium text-teal-800">{{ requisicao.get_estado_display }}</span>
+  {% else %}
+    <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">{{ requisicao.get_estado_display }}</span>
+  {% endif %}
+{% endwith %}

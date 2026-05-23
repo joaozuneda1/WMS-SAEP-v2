@@ -26,7 +26,11 @@ from apps.requisicoes.policies import (
     exigir_pode_editar_rascunho,
     resolver_escopo_criacao_requisicao,
 )
-from apps.requisicoes.selectors import materiais_para_requisicao
+from apps.requisicoes.selectors import (
+    materiais_para_requisicao,
+    minhas_requisicoes,
+    requisicoes_visiveis_para,
+)
 from apps.requisicoes.services import criar_requisicao, editar_rascunho
 
 
@@ -273,3 +277,56 @@ def buscar_materiais(request):
     ]
 
     return JsonResponse({'resultados': resultado})
+
+
+# ---------------------------------------------------------------------------
+# Minhas requisições — lista
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@require_GET
+def minhas_requisicoes_view(request):
+    """Lista as requisições onde o usuário é criador ou beneficiário.
+
+    Rascunhos de terceiros são filtrados pelo selector.
+    """
+    requisicoes = minhas_requisicoes(request.user.pk)
+    return render(
+        request,
+        'requisicoes/lista_minhas.html',
+        {'requisicoes': requisicoes},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Detalhe da requisição
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@require_GET
+def detalhe_requisicao_view(request, pk: int):
+    """Renderiza cabeçalho, itens e timeline da requisição.
+
+    Escopo de visibilidade unificado por ``requisicoes_visiveis_para``;
+    objetos fora do escopo retornam 404 (ADR-0010) para não revelar
+    existência.
+    """
+    requisicao = get_object_or_404(
+        requisicoes_visiveis_para(request.user.pk),
+        pk=pk,
+    )
+    itens = list(requisicao.itens.select_related('material').all())
+    eventos = list(
+        requisicao.eventos.select_related('ator').order_by('-criado_em', '-id')
+    )
+    return render(
+        request,
+        'requisicoes/detalhe.html',
+        {
+            'requisicao': requisicao,
+            'itens': itens,
+            'eventos': eventos,
+        },
+    )
