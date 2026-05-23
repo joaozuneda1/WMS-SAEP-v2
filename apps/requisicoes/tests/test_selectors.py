@@ -264,4 +264,5 @@ def test_minhas_ordenadas_por_criado_em_desc(
     solicitante, req_solicitante_rascunho, req_solicitante_enviada
 ):
     minhas = list(minhas_requisicoes(solicitante.pk))
-    assert minhas[0].criado_em >= minhas[-1].criado_em
+    criado_ems = [r.criado_em for r in minhas]
+    assert criado_ems == sorted(criado_ems, reverse=True)
