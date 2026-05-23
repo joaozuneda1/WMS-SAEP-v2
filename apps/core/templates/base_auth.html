@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block body %}
-  <header class="site-header">
+  <header class="site-header" x-data="{ open: false }">
     <div class="site-header-inner">
 
       {# Marca / identidade do app #}
@@ -15,10 +15,34 @@
         <span class="site-header-name" translate="no">WMS-SAEP</span>
       </div>
 
+      {# Toggle mobile #}
+      {% if user.is_authenticated %}
+        <button
+          type="button"
+          class="site-nav-toggle"
+          aria-label="Abrir menu de navegação"
+          :aria-expanded="open ? 'true' : 'false'"
+          aria-controls="site-nav-menu"
+          @click="open = !open"
+        >
+          <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M3 5h14a1 1 0 010 2H3a1 1 0 010-2zm0 4h14a1 1 0 010 2H3a1 1 0 010-2zm0 4h14a1 1 0 010 2H3a1 1 0 010-2z" clip-rule="evenodd"/>
+          </svg>
+          <svg x-show="open" x-cloak xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+      {% endif %}
+
       {# Navegação principal #}
       {% if user.is_authenticated %}
         {% with current=request.resolver_match.view_name %}
-          <nav class="site-nav" aria-label="Navegação principal">
+          <nav
+            id="site-nav-menu"
+            class="site-nav"
+            :class="open ? 'site-nav--open' : ''"
+            aria-label="Navegação principal"
+          >
             <a
               href="{% url 'requisicoes:minhas' %}"
               class="site-nav-link"
@@ -56,7 +80,7 @@
     </div>
   </header>
 
-  <main class="mx-auto max-w-5xl p-6">
+  <main class="mx-auto max-w-screen-xl p-6">
     {% include "core/partials/_messages.html" %}
     {% block content %}{% endblock %}
   </main>
