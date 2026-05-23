@@ -51,6 +51,7 @@ class RequisicaoCriacaoForm(RequisicaoForm):
             del self.fields['modo_criacao']
             del self.fields['beneficiario_id']
         else:
+            self.fields['modo_criacao'].initial = 'proprio'
             # Mostrar select de terceiros
             choices = [('', '---------')] + [
                 (u.pk, f'{u.nome} ({u.matricula}) — {u.setor.nome}')

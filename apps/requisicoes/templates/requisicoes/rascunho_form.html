@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto">
+<div class="max-w-3xl mx-auto pb-20 sm:pb-0">
 
   {# Cabeçalho da página #}
   <div class="mb-6">
@@ -29,9 +29,12 @@
   <form method="post" novalidate>
     {% csrf_token %}
 
-    {# --- Seção: Beneficiário --- #}
-    <section class="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 class="text-base font-medium text-slate-800 mb-4">Beneficiário</h2>
+    {# --- Seção 1: Beneficiário --- #}
+    <section class="mb-6 rounded-xl border {% if form.modo_criacao.errors or form.beneficiario_id.errors %}border-red-300 bg-red-50{% else %}border-slate-200 bg-white{% endif %} p-5 shadow-sm">
+      <h2 class="text-base font-medium text-slate-800 mb-4">
+        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-500 text-xs font-semibold mr-1.5">1</span>
+        Beneficiário
+      </h2>
 
       {% if modo == 'editar' and requisicao %}
         {# Edição: beneficiário é imutável — exibir como texto #}
@@ -60,7 +63,7 @@
 
       {% else %}
         {# Escopo ampliado: escolha explícita self / other #}
-        <div x-data="{ modoCriacao: '{{ form.modo_criacao.value|default:'' }}' }">
+        <div x-data="{ modoCriacao: '{{ form.modo_criacao.value|default:'proprio' }}' }">
 
           {# Radio: para mim / para outro #}
           <div class="flex gap-6 mb-4">
@@ -109,9 +112,12 @@
       {% endif %}
     </section>
 
-    {# --- Seção: Itens --- #}
-    <section class="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 class="text-base font-medium text-slate-800 mb-1">Itens</h2>
+    {# --- Seção 2: Itens --- #}
+    <section class="mb-6 rounded-xl border {% if formset.non_form_errors or formset.total_error_count %}border-red-300 bg-red-50{% else %}border-slate-200 bg-white{% endif %} p-5 shadow-sm">
+      <h2 class="text-base font-medium text-slate-800 mb-1">
+        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-500 text-xs font-semibold mr-1.5">2</span>
+        Itens
+      </h2>
       <p class="aviso_quantidade text-xs text-slate-500 mb-4">Adicione ao menos um material com quantidade solicitada.</p>
 
       {# Management form do formset — obrigatório #}
@@ -136,7 +142,7 @@
       {# Botão adicionar item via HTMX #}
       <button
         type="button"
-        class="mt-4 flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+        class="mt-6 flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
         hx-get="{% url 'requisicoes:nova_linha_item' %}"
         hx-target="#itens-container"
         hx-swap="beforeend"
@@ -151,9 +157,12 @@
       </button>
     </section>
 
-    {# --- Seção: Observação geral --- #}
-    <section class="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 class="text-base font-medium text-slate-800 mb-3">Observação geral</h2>
+    {# --- Seção 3: Observação geral --- #}
+    <section class="mb-6 rounded-xl border {% if form.observacao_geral.errors %}border-red-300 bg-red-50{% else %}border-slate-200 bg-white{% endif %} p-5 shadow-sm">
+      <h2 class="text-base font-medium text-slate-800 mb-3">
+        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-500 text-xs font-semibold mr-1.5">3</span>
+        Observação geral
+      </h2>
       <label class="sr-only" for="{{ form.observacao_geral.id_for_label }}">Observação geral</label>
       <textarea
         name="{{ form.observacao_geral.html_name }}"
@@ -167,8 +176,8 @@
       {% endif %}
     </section>
 
-    {# --- Ações --- #}
-    <div class="flex items-center gap-3">
+    {# --- Ações — sticky no mobile, static no sm+ --- #}
+    <div class="fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-200 px-6 py-3 flex items-center gap-3 sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
       <button
         type="submit"
         class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
