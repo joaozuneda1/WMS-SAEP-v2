@@ -646,9 +646,6 @@
   .text-red-800 {
     color: var(--color-red-800);
   }
-  .text-slate-400 {
-    color: var(--color-slate-400);
-  }
   .text-slate-500 {
     color: var(--color-slate-500);
   }
@@ -760,13 +757,6 @@
       }
     }
   }
-  .hover\:text-red-500 {
-    &:hover {
-      @media (hover: hover) {
-        color: var(--color-red-500);
-      }
-    }
-  }
   .hover\:text-red-700 {
     &:hover {
       @media (hover: hover) {
@@ -826,11 +816,6 @@
   .focus-visible\:ring-blue-500 {
     &:focus-visible {
       --tw-ring-color: var(--color-blue-500);
-    }
-  }
-  .focus-visible\:ring-red-500 {
-    &:focus-visible {
-      --tw-ring-color: var(--color-red-500);
     }
   }
   .focus-visible\:ring-red-600 {

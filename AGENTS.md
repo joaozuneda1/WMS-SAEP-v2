@@ -31,6 +31,20 @@ Single-context repo. Use `docs/agents/domain.md` as the routing guide for domain
 
 If docs and memory disagree, trust live docs/code first and update Serena memory when the decision is durable.
 
+### Design handoff
+
+For UI/frontend work, use `.design/` as the required design handoff before implementing or reviewing screens.
+
+Read the applicable files first:
+
+- `.design/INFORMATION_ARCHITECTURE.md` for routes, navigation, page hierarchy, user flows, labels, and URL strategy.
+- `.design/TASKS.md` for the current UI build breakdown generated from the briefs.
+- `.design/<area>/DESIGN_BRIEF.md` for screen-specific UX, layout, interaction, responsive, accessibility, copy, and out-of-scope decisions.
+
+`.design/` guides implementation and review, but it does not override accepted ADRs, `docs/design-system.md`, `docs/CONVENTIONS.md`, domain rules, tests, or live code. If `.design/` conflicts with those sources, surface the conflict before implementing.
+
+When implementing UI from `.design/`, keep the scope to the referenced brief/task unless the user explicitly expands it.
+
 ### Code conventions
 
 Do not duplicate project rules here. Use these sources:
@@ -39,6 +53,7 @@ Do not duplicate project rules here. Use these sources:
 - Service/policy/domain-exception contract: ADR-0011.
 - Test strategy: ADR-0010.
 - Server-rendered frontend and design system: `docs/design-system.md` and ADR-0008.
+- UI/frontend handoff: `.design/`, especially `.design/INFORMATION_ARCHITECTURE.md`, `.design/TASKS.md`, and the relevant `.design/<area>/DESIGN_BRIEF.md`.
 - Seed/dev data contract: ADR-0009.
 
 ## Project commands
