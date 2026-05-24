@@ -11,7 +11,10 @@ from apps.requisicoes.models import EstadoRequisicao, Requisicao
 from apps.requisicoes.policies import (
     pode_criar_para_beneficiario,
     pode_editar_rascunho,
+    pode_recusar_requisicao,
+    pode_retornar_para_rascunho,
     pode_ser_beneficiario,
+    pode_ver_fila_autorizacao,
     resolver_escopo_criacao_requisicao,
 )
 
@@ -269,3 +272,72 @@ def test_criador_inativo_nao_pode_enviar(solicitante, setor_obras):
     solicitante.is_active = False
     solicitante.save(update_fields=['is_active'])
     assert pode_enviar_rascunho(solicitante, req) is False
+
+
+# ---------------------------------------------------------------------------
+# Fila de autorização, retorno e recusa
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_chefe_setor_pode_ver_fila_autorizacao(chefe_obras):
+    assert pode_ver_fila_autorizacao(chefe_obras) is True
+
+
+@pytest.mark.django_db
+def test_auxiliar_almox_nao_pode_ver_fila_autorizacao(aux_almoxarifado):
+    assert pode_ver_fila_autorizacao(aux_almoxarifado) is False
+
+
+@pytest.mark.django_db
+def test_criador_pode_retornar_para_rascunho(solicitante, setor_obras):
+    req = Requisicao.objects.create(
+        estado=EstadoRequisicao.AGUARDANDO_AUTORIZACAO,
+        numero_publico='REQ-2026-000101',
+        criador=solicitante,
+        beneficiario=solicitante,
+        setor_beneficiario=setor_obras,
+    )
+    assert pode_retornar_para_rascunho(solicitante, req) is True
+
+
+@pytest.mark.django_db
+def test_terceiro_nao_pode_retornar_para_rascunho(
+    outro_usuario_obras, solicitante, setor_obras
+):
+    req = Requisicao.objects.create(
+        estado=EstadoRequisicao.AGUARDANDO_AUTORIZACAO,
+        numero_publico='REQ-2026-000102',
+        criador=solicitante,
+        beneficiario=solicitante,
+        setor_beneficiario=setor_obras,
+    )
+    assert pode_retornar_para_rascunho(outro_usuario_obras, req) is False
+
+
+@pytest.mark.django_db
+def test_chefe_setor_pode_recusar_requisicao_do_setor(
+    chefe_obras, solicitante, setor_obras
+):
+    req = Requisicao.objects.create(
+        estado=EstadoRequisicao.AGUARDANDO_AUTORIZACAO,
+        numero_publico='REQ-2026-000103',
+        criador=solicitante,
+        beneficiario=solicitante,
+        setor_beneficiario=setor_obras,
+    )
+    assert pode_recusar_requisicao(chefe_obras, req) is True
+
+
+@pytest.mark.django_db
+def test_chefe_almox_nao_recusa_requisicao_de_outro_setor(
+    chefe_almoxarifado, solicitante, setor_obras
+):
+    req = Requisicao.objects.create(
+        estado=EstadoRequisicao.AGUARDANDO_AUTORIZACAO,
+        numero_publico='REQ-2026-000104',
+        criador=solicitante,
+        beneficiario=solicitante,
+        setor_beneficiario=setor_obras,
+    )
+    assert pode_recusar_requisicao(chefe_almoxarifado, req) is False

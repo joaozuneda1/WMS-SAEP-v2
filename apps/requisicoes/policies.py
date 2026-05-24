@@ -72,6 +72,17 @@ def _setores_escopo_setor(usuario: User) -> list[int]:
     return list(ids)
 
 
+def _setor_chefiado_ativo(usuario: User):
+    """Setor ativo chefiado pelo usuário, se existir."""
+    try:
+        setor = usuario.setor_chefiado
+    except Exception:
+        return None
+    if not setor.ativo:
+        return None
+    return setor
+
+
 # ---------------------------------------------------------------------------
 # pode_ser_beneficiario
 # ---------------------------------------------------------------------------
@@ -248,4 +259,60 @@ def exigir_pode_enviar_rascunho(ator: User, requisicao: Requisicao) -> None:
         raise PermissaoNegada(
             'Apenas o criador pode enviar este rascunho para autorização.',
             code='enviar_rascunho_negado',
+        )
+
+
+# ---------------------------------------------------------------------------
+# Fila de autorização, retorno e recusa
+# ---------------------------------------------------------------------------
+
+
+def pode_ver_fila_autorizacao(ator: User) -> bool:
+    """True se o ator tem papel de chefia autorizadora."""
+    if not ator.is_active:
+        return False
+    if ator.is_superuser:
+        return True
+    return _setor_chefiado_ativo(ator) is not None
+
+
+def exigir_pode_ver_fila_autorizacao(ator: User) -> None:
+    if not pode_ver_fila_autorizacao(ator):
+        raise PermissaoNegada(
+            'Você não tem permissão para ver a fila de autorização.',
+            code='fila_autorizacao_negada',
+        )
+
+
+def pode_retornar_para_rascunho(ator: User, requisicao: Requisicao) -> bool:
+    """True se o ator é criador ou beneficiário ativo da requisição."""
+    return bool(
+        ator.is_active
+        and (ator.pk == requisicao.criador_id or ator.pk == requisicao.beneficiario_id)
+    )
+
+
+def exigir_pode_retornar_para_rascunho(ator: User, requisicao: Requisicao) -> None:
+    if not pode_retornar_para_rascunho(ator, requisicao):
+        raise PermissaoNegada(
+            'Apenas o criador ou beneficiário pode retornar esta requisição para rascunho.',
+            code='retornar_rascunho_negado',
+        )
+
+
+def pode_recusar_requisicao(ator: User, requisicao: Requisicao) -> bool:
+    """True se o ator chefia o setor do beneficiário."""
+    if not ator.is_active:
+        return False
+    if ator.is_superuser:
+        return True
+    setor = _setor_chefiado_ativo(ator)
+    return bool(setor is not None and requisicao.setor_beneficiario_id == setor.pk)
+
+
+def exigir_pode_recusar_requisicao(ator: User, requisicao: Requisicao) -> None:
+    if not pode_recusar_requisicao(ator, requisicao):
+        raise PermissaoNegada(
+            'Você não tem permissão para recusar esta requisição.',
+            code='recusar_requisicao_negada',
         )

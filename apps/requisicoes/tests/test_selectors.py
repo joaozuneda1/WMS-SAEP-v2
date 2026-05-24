@@ -5,6 +5,7 @@ import pytest
 from apps.accounts.models import User
 from apps.requisicoes.models import EstadoRequisicao, Requisicao
 from apps.requisicoes.selectors import (
+    fila_autorizacao,
     material_eh_elegivel,
     materiais_para_requisicao,
     minhas_requisicoes,
@@ -266,3 +267,75 @@ def test_minhas_ordenadas_por_criado_em_desc(
     minhas = list(minhas_requisicoes(solicitante.pk))
     criado_ems = [r.criado_em for r in minhas]
     assert criado_ems == sorted(criado_ems, reverse=True)
+
+
+# ---------------------------------------------------------------------------
+# fila_autorizacao
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_fila_autorizacao_chefe_setor_ve_apenas_setor_chefiado(
+    chefe_obras, req_solicitante_enviada, req_outro_setor
+):
+    fila = list(fila_autorizacao(chefe_obras.pk))
+    assert req_solicitante_enviada in fila
+    assert req_outro_setor not in fila
+
+
+@pytest.mark.django_db
+def test_fila_autorizacao_exclui_estados_fora_de_aguardando(
+    chefe_obras, req_solicitante_enviada
+):
+    req_solicitante_enviada.estado = EstadoRequisicao.RASCUNHO
+    req_solicitante_enviada.save(update_fields=['estado'])
+    assert list(fila_autorizacao(chefe_obras.pk)) == []
+
+
+@pytest.mark.django_db
+def test_fila_autorizacao_chefe_almox_ve_apenas_setor_almox(
+    chefe_almoxarifado,
+    setor_almoxarifado,
+    req_solicitante_enviada,
+):
+    req_almox = Requisicao.objects.create(
+        estado=EstadoRequisicao.AGUARDANDO_AUTORIZACAO,
+        numero_publico='REQ-2026-0100',
+        criador=chefe_almoxarifado,
+        beneficiario=chefe_almoxarifado,
+        setor_beneficiario=setor_almoxarifado,
+    )
+    fila = list(fila_autorizacao(chefe_almoxarifado.pk))
+    assert req_almox in fila
+    assert req_solicitante_enviada not in fila
+
+
+@pytest.mark.django_db
+def test_fila_autorizacao_superuser_ve_todos_setores(
+    db, setor_obras, req_solicitante_enviada, req_outro_setor
+):
+    su = User.objects.create_superuser(
+        matricula='990', nome='Super Fila', password='senha', setor=setor_obras
+    )
+    fila = list(fila_autorizacao(su.pk))
+    assert req_solicitante_enviada in fila
+    assert req_outro_setor in fila
+
+
+@pytest.mark.django_db
+def test_fila_autorizacao_auxiliar_almox_vazia(
+    aux_almoxarifado, req_solicitante_enviada
+):
+    assert list(fila_autorizacao(aux_almoxarifado.pk)) == []
+
+
+@pytest.mark.django_db
+def test_fila_autorizacao_anota_quantidade_itens(
+    chefe_obras, req_solicitante_enviada, material_disponivel
+):
+    req_solicitante_enviada.itens.create(
+        material=material_disponivel,
+        quantidade_solicitada=1,
+    )
+    req = fila_autorizacao(chefe_obras.pk).get(pk=req_solicitante_enviada.pk)
+    assert req.quantidade_itens == 1

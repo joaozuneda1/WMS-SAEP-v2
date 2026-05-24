@@ -5,7 +5,7 @@ escopo de visibilidade de requisições por papel (ADR-0004).
 Leituras triviais podem usar o ORM direto na view.
 """
 
-from django.db.models import F, Q, QuerySet
+from django.db.models import Count, F, Q, QuerySet
 
 from apps.accounts.models import SetorClassificacao, User, VinculoAuxiliar
 from apps.estoque.models import Material
@@ -107,6 +107,36 @@ def minhas_requisicoes(ator_id: int) -> QuerySet[Requisicao]:
     return visiveis.filter(
         Q(criador_id=ator_id) | (Q(beneficiario_id=ator_id) & nao_rascunho)
     ).order_by('-criado_em')
+
+
+def fila_autorizacao(ator_id: int) -> QuerySet[Requisicao]:
+    """Fila de requisições aguardando autorização para chefias autorizadoras."""
+    base_qs = (
+        Requisicao.objects.select_related('criador', 'beneficiario', 'setor_beneficiario')
+        .filter(estado=EstadoRequisicao.AGUARDANDO_AUTORIZACAO)
+        .annotate(quantidade_itens=Count('itens'))
+        .order_by('atualizado_em', 'criado_em', 'id')
+    )
+    try:
+        ator = User.objects.get(pk=ator_id)
+    except User.DoesNotExist:
+        return base_qs.none()
+
+    if not ator.is_active:
+        return base_qs.none()
+
+    if ator.is_superuser:
+        return base_qs
+
+    try:
+        setor_chefiado = ator.setor_chefiado
+    except Exception:
+        return base_qs.none()
+
+    if not setor_chefiado.ativo:
+        return base_qs.none()
+
+    return base_qs.filter(setor_beneficiario_id=setor_chefiado.pk)
 
 
 def material_eh_elegivel(material: Material) -> bool:
