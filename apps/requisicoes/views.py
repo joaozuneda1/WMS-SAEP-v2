@@ -27,6 +27,7 @@ from apps.requisicoes.forms import (
 from apps.requisicoes.models import Requisicao
 from apps.requisicoes.policies import (
     exigir_pode_editar_rascunho,
+    pode_editar_rascunho,
     pode_enviar_rascunho,
     resolver_escopo_criacao_requisicao,
 )
@@ -112,9 +113,9 @@ def nova_requisicao(request):
                     return redirect('requisicoes:detalhe', pk=req.pk)
                 messages.success(
                     request,
-                    'Rascunho criado com sucesso. Você pode continuar editando antes de enviar para autorização.',
+                    'Rascunho criado com sucesso. Revise os itens antes de enviar para autorização.',
                 )
-                return redirect('requisicoes:editar_rascunho', pk=req.pk)
+                return redirect('requisicoes:detalhe', pk=req.pk)
 
         return render(
             request,
@@ -362,6 +363,10 @@ def detalhe_requisicao_view(request, pk: int):
             'pode_enviar': (
                 requisicao.estado == 'rascunho'
                 and pode_enviar_rascunho(request.user, requisicao)
+            ),
+            'pode_editar': (
+                requisicao.estado == 'rascunho'
+                and pode_editar_rascunho(request.user, requisicao)
             ),
         },
     )

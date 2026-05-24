@@ -302,7 +302,9 @@
     };
   }
 
-  // Anti double-submit: desabilita o submit clicado e troca rótulo.
+  // Anti double-submit: troca o rótulo na hora; desabilita só depois que o
+  // browser coletou o form data — caso contrário o name=acao do submitter é
+  // descartado (botão disabled não envia name/value).
   document.querySelectorAll('form[data-prevent-double-submit]').forEach((form) => {
     let submitter = null;
     form.querySelectorAll('button[type="submit"]').forEach((btn) => {
@@ -313,12 +315,17 @@
       targets.forEach((btn) => {
         if (btn.dataset.submitting === '1') return;
         btn.dataset.submitting = '1';
-        btn.disabled = true;
         btn.setAttribute('aria-busy', 'true');
         const textNode = btn.querySelector('[data-submit-text]');
         const loading = btn.dataset.submitLoadingLabel;
         if (textNode && loading) textNode.textContent = loading;
       });
+      // Defer disable até o próximo tick — o form já estará submetido.
+      setTimeout(() => {
+        targets.forEach((btn) => {
+          btn.disabled = true;
+        });
+      }, 0);
     });
   });
 </script>

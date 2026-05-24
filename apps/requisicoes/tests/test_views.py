@@ -75,10 +75,7 @@ def test_nova_requisicao_post_valido_cria_e_redireciona(
     assert req is not None
     assert req.estado == EstadoRequisicao.RASCUNHO
     assert resp.status_code == 302
-    assert (
-        reverse('requisicoes:editar_rascunho', kwargs={'pk': req.pk})
-        in resp['Location']
-    )
+    assert reverse('requisicoes:detalhe', kwargs={'pk': req.pk}) in resp['Location']
 
 
 @pytest.mark.django_db
@@ -106,7 +103,7 @@ def test_nova_requisicao_post_acao_enviar_cria_e_envia(
 def test_nova_requisicao_post_acao_rascunho_explicito(
     client, solicitante, material_disponivel
 ):
-    """acao='rascunho' mantém comportamento padrão (cria e vai para edição)."""
+    """acao='rascunho' redireciona para o detalhe do rascunho criado."""
     _login(client, solicitante)
     data = _formset_post(material_disponivel.pk, extra={'acao': 'rascunho'})
     resp = client.post(reverse('requisicoes:nova_requisicao'), data)
@@ -115,10 +112,7 @@ def test_nova_requisicao_post_acao_rascunho_explicito(
     assert req.estado == EstadoRequisicao.RASCUNHO
     assert req.numero_publico is None
     assert resp.status_code == 302
-    assert (
-        reverse('requisicoes:editar_rascunho', kwargs={'pk': req.pk})
-        in resp['Location']
-    )
+    assert reverse('requisicoes:detalhe', kwargs={'pk': req.pk}) in resp['Location']
 
 
 @pytest.mark.django_db
@@ -692,3 +686,70 @@ def test_detalhe_nao_exibe_botao_enviar_em_estado_nao_rascunho(
     response = client.get(reverse('requisicoes:detalhe', kwargs={'pk': req.pk}))
     assert response.status_code == 200
     assert response.context['pode_enviar'] is False
+
+
+@pytest.mark.django_db
+def test_detalhe_exibe_link_editar_para_criador_em_rascunho(
+    client, solicitante, material_disponivel
+):
+    _login(client, solicitante)
+    req = criar_requisicao(
+        ator_id=solicitante.pk,
+        beneficiario_id=solicitante.pk,
+        itens=[
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('1'),
+            }
+        ],
+    )
+    response = client.get(reverse('requisicoes:detalhe', kwargs={'pk': req.pk}))
+    assert response.status_code == 200
+    assert response.context['pode_editar'] is True
+    url_editar = reverse('requisicoes:editar_rascunho', kwargs={'pk': req.pk})
+    assert url_editar in response.content.decode('utf-8')
+
+
+@pytest.mark.django_db
+def test_detalhe_nao_exibe_link_editar_para_nao_criador(
+    client, solicitante, outro_usuario_obras, material_disponivel, setor_obras
+):
+    """Outro usuário do mesmo setor não vê rascunho de terceiro — nem o link."""
+    req = criar_requisicao(
+        ator_id=solicitante.pk,
+        beneficiario_id=solicitante.pk,
+        itens=[
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('1'),
+            }
+        ],
+    )
+    _login(client, outro_usuario_obras)
+    response = client.get(reverse('requisicoes:detalhe', kwargs={'pk': req.pk}))
+    # rascunho de terceiro → 404 (selector unifica visibilidade)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_detalhe_nao_exibe_link_editar_em_estado_nao_rascunho(
+    client, solicitante, material_disponivel
+):
+    _login(client, solicitante)
+    req = criar_requisicao(
+        ator_id=solicitante.pk,
+        beneficiario_id=solicitante.pk,
+        itens=[
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('1'),
+            }
+        ],
+    )
+    req.estado = EstadoRequisicao.AGUARDANDO_AUTORIZACAO
+    req.numero_publico = 'REQ-2026-000555'
+    req.save(update_fields=['estado', 'numero_publico'])
+
+    response = client.get(reverse('requisicoes:detalhe', kwargs={'pk': req.pk}))
+    assert response.status_code == 200
+    assert response.context['pode_editar'] is False
