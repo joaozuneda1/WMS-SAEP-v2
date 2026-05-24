@@ -551,9 +551,12 @@ def test_enviar_rascunho_post_criador_redireciona_detalhe(
 
 
 @pytest.mark.django_db
-def test_enviar_rascunho_post_estado_invalido_mostra_erro(
+def test_enviar_rascunho_post_estado_invalido_mostra_warning(
     client, solicitante, setor_obras, material_disponivel
 ):
+    """EstadoInvalido vira messages.warning (contrato de mensagens)."""
+    from django.contrib.messages import constants as message_constants
+
     _login(client, solicitante)
     req = criar_requisicao(
         ator_id=solicitante.pk,
@@ -574,8 +577,11 @@ def test_enviar_rascunho_post_estado_invalido_mostra_erro(
         follow=True,
     )
     assert response.status_code == 200
-    msgs = [str(m) for m in response.context['messages']]
-    assert any('não é permitida' in m or 'inválida' in m.lower() for m in msgs)
+    msgs = list(response.context['messages'])
+    assert any(
+        m.level == message_constants.WARNING and 'não é permitida' in str(m)
+        for m in msgs
+    )
 
 
 @pytest.mark.django_db
@@ -621,7 +627,7 @@ def test_detalhe_exibe_botao_enviar_para_criador_em_rascunho(
     response = client.get(reverse('requisicoes:detalhe', kwargs={'pk': req.pk}))
     assert response.status_code == 200
     assert response.context['pode_enviar'] is True
-    assert b'Enviar para autoriza' in response.content
+    assert 'Enviar para autorização' in response.content.decode('utf-8')
 
 
 @pytest.mark.django_db

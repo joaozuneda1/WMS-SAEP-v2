@@ -371,7 +371,10 @@ def enviar_rascunho_view(request, pk: int):
         )
     except PermissaoNegada as exc:
         raise PermissionDenied(str(exc))
-    except (EstadoInvalido, DadosInvalidos) as exc:
+    except EstadoInvalido as exc:
+        messages.warning(request, str(exc))
+        return _htmx_redirect(request, reverse('requisicoes:detalhe', args=[pk]))
+    except DadosInvalidos as exc:
         messages.error(request, str(exc))
         return _htmx_redirect(request, reverse('requisicoes:detalhe', args=[pk]))
 
