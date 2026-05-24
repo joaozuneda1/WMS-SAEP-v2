@@ -40,12 +40,11 @@
           <div
             id="app-bar-menu"
             class="app-bar__menu app-bar__menu--start"
-            role="menu"
             x-show="menuOpen"
             x-cloak
             x-transition.opacity.duration.150ms
           >
-            {% block topbar_domain %}{% include 'requisicoes/_topbar_nav.html' %}{% endblock %}
+            {% block topbar_domain %}{% endblock %}
 
             <div class="app-bar__menu-divider" role="separator"></div>
 
