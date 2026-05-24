@@ -1,0 +1,135 @@
+{% extends "base_auth.html" %}
+
+{% block title %}
+  {% if requisicao.numero_publico %}{{ requisicao.numero_publico }}{% else %}Rascunho #{{ requisicao.pk }}{% endif %} — WMS-SAEP
+{% endblock %}
+
+{% block content %}
+<div class="max-w-screen-xl mx-auto">
+
+  <nav class="mb-4">
+    <a
+      href="{{ voltar_url }}"
+      class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+    >
+      <span aria-hidden="true">←</span> Voltar
+    </a>
+  </nav>
+
+  {# --- 1. Cabeçalho --- #}
+  <section class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+    <div class="flex items-start justify-between gap-3 flex-wrap">
+      <div class="min-w-0">
+        <h1 class="text-lg font-semibold text-slate-900 sm:text-2xl">
+          {% if requisicao.numero_publico %}
+            {{ requisicao.numero_publico }}
+          {% else %}
+            <span class="text-slate-700">Rascunho #{{ requisicao.pk }}</span>
+          {% endif %}
+        </h1>
+        <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">
+          Criada em {{ requisicao.criado_em|date:"d/m/Y \à\s H:i" }}
+        </p>
+      </div>
+      <div class="shrink-0">
+        {% include "requisicoes/partials/_estado_badge.html" with requisicao=requisicao %}
+      </div>
+    </div>
+
+    <dl class="mt-3 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:mt-5 sm:grid-cols-2 sm:gap-y-4">
+      <div>
+        <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Beneficiário</dt>
+        <dd class="mt-0.5 text-slate-900">
+          {{ requisicao.beneficiario.nome }}
+          <span class="text-slate-400">({{ requisicao.beneficiario.matricula }})</span>
+        </dd>
+      </div>
+      <div>
+        <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Setor</dt>
+        <dd class="mt-0.5 text-slate-900">{{ requisicao.setor_beneficiario.nome }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Criador</dt>
+        <dd class="mt-0.5 text-slate-900">
+          {{ requisicao.criador.nome }}
+          <span class="text-slate-400">({{ requisicao.criador.matricula }})</span>
+        </dd>
+      </div>
+      <div>
+        <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Atualizada em</dt>
+        <dd class="mt-0.5 text-slate-900">{{ requisicao.atualizado_em|date:"d/m/Y H:i" }}</dd>
+      </div>
+      {% if requisicao.observacao_geral %}
+        <div class="sm:col-span-2">
+          <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Observação</dt>
+          <dd class="mt-0.5 text-slate-700 whitespace-pre-line">{{ requisicao.observacao_geral }}</dd>
+        </div>
+      {% endif %}
+    </dl>
+  </section>
+
+  {# --- 2. Itens (seção operacional principal) --- #}
+  <section class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-md ring-1 ring-slate-100 sm:p-6">
+    <div class="mb-4 flex items-baseline justify-between gap-3">
+      <h2 class="text-xl font-semibold text-slate-900">Itens</h2>
+      {% if itens %}
+        <span class="text-xs font-medium text-slate-500">
+          {{ itens|length }} {{ itens|length|pluralize:"item,itens" }}
+        </span>
+      {% endif %}
+    </div>
+
+    {% if itens %}
+      {% with estado=requisicao.estado %}
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50">
+              <tr>
+                <th scope="col" class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Material</th>
+                <th scope="col" class="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Solicitada</th>
+                {% if estado == 'autorizada' or estado == 'pronta_para_retirada' or estado == 'atendida' or estado == 'estornada' or estado == 'cancelada' %}
+                  <th scope="col" class="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Autorizada</th>
+                {% endif %}
+                {% if estado == 'atendida' or estado == 'estornada' %}
+                  <th scope="col" class="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Entregue</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              {% for item in itens %}
+                <tr>
+                  <td class="px-3 py-2 text-slate-900">
+                    <span class="font-medium">{{ item.material.codigo }}</span>
+                    <span class="text-slate-600">— {{ item.material.nome }}</span>
+                    <span class="text-xs text-slate-400">({{ item.material.get_unidade_display }})</span>
+                  </td>
+                  <td class="px-3 py-2 text-right tabular-nums text-slate-900">{{ item.quantidade_solicitada|floatformat:"-3" }}</td>
+                  {% if estado == 'autorizada' or estado == 'pronta_para_retirada' or estado == 'atendida' or estado == 'estornada' or estado == 'cancelada' %}
+                    <td class="px-3 py-2 text-right tabular-nums text-slate-900">
+                      {% if item.quantidade_autorizada is not None %}{{ item.quantidade_autorizada|floatformat:"-3" }}{% else %}<span class="text-slate-300">—</span>{% endif %}
+                    </td>
+                  {% endif %}
+                  {% if estado == 'atendida' or estado == 'estornada' %}
+                    <td class="px-3 py-2 text-right tabular-nums text-slate-900">
+                      {% if item.quantidade_entregue is not None %}{{ item.quantidade_entregue|floatformat:"-3" }}{% else %}<span class="text-slate-300">—</span>{% endif %}
+                    </td>
+                  {% endif %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endwith %}
+    {% else %}
+      <p class="text-sm text-slate-500">Sem itens registrados.</p>
+    {% endif %}
+  </section>
+
+  {# --- 3. Timeline (suporte/auditoria, peso secundário) --- #}
+  <section class="mb-6 rounded-xl border border-slate-200 bg-slate-50/60 p-4 sm:p-6">
+    <h2 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">Histórico</h2>
+    {% include "requisicoes/partials/_timeline.html" with eventos=eventos %}
+  </section>
+
+</div>
+{% endblock %}

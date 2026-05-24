@@ -289,3 +289,187 @@ def test_buscar_materiais_shape(client, solicitante, material_disponivel):
         assert 'nome' in r
         assert 'codigo' in r
         assert 'saldo_disponivel' in r
+
+
+# ---------------------------------------------------------------------------
+# Minhas requisições — lista
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def req_rascunho_solicitante(db, solicitante, setor_obras):
+    return Requisicao.objects.create(
+        estado=EstadoRequisicao.RASCUNHO,
+        criador=solicitante,
+        beneficiario=solicitante,
+        setor_beneficiario=setor_obras,
+    )
+
+
+@pytest.fixture
+def req_enviada_solicitante(db, solicitante, setor_obras):
+    return Requisicao.objects.create(
+        estado=EstadoRequisicao.AGUARDANDO_AUTORIZACAO,
+        numero_publico='REQ-2026-0010',
+        criador=solicitante,
+        beneficiario=solicitante,
+        setor_beneficiario=setor_obras,
+    )
+
+
+@pytest.fixture
+def req_rascunho_aux_para_solicitante(db, aux_obras, solicitante, setor_obras):
+    return Requisicao.objects.create(
+        estado=EstadoRequisicao.RASCUNHO,
+        criador=aux_obras,
+        beneficiario=solicitante,
+        setor_beneficiario=setor_obras,
+    )
+
+
+@pytest.fixture
+def req_outro_setor_view(db, usuario_ti, setor_ti):
+    return Requisicao.objects.create(
+        estado=EstadoRequisicao.AGUARDANDO_AUTORIZACAO,
+        numero_publico='REQ-2026-0011',
+        criador=usuario_ti,
+        beneficiario=usuario_ti,
+        setor_beneficiario=setor_ti,
+    )
+
+
+@pytest.mark.django_db
+def test_minhas_get_sem_login_redireciona(client):
+    response = client.get(reverse('requisicoes:minhas'))
+    assert response.status_code == 302
+    assert '/entrar' in response['Location'] or '/login' in response['Location']
+
+
+@pytest.mark.django_db
+def test_minhas_get_autenticado_200(client, solicitante, req_enviada_solicitante):
+    _login(client, solicitante)
+    response = client.get(reverse('requisicoes:minhas'))
+    assert response.status_code == 200
+    requisicoes = list(response.context['requisicoes'])
+    assert req_enviada_solicitante in requisicoes
+
+
+@pytest.mark.django_db
+def test_minhas_exclui_rascunho_de_terceiro(
+    client, solicitante, req_rascunho_aux_para_solicitante
+):
+    _login(client, solicitante)
+    response = client.get(reverse('requisicoes:minhas'))
+    assert response.status_code == 200
+    assert req_rascunho_aux_para_solicitante not in list(
+        response.context['requisicoes']
+    )
+
+
+@pytest.mark.django_db
+def test_minhas_renderiza_numero_publico_e_fallback_rascunho(
+    client, solicitante, req_rascunho_solicitante, req_enviada_solicitante
+):
+    _login(client, solicitante)
+    response = client.get(reverse('requisicoes:minhas'))
+    html = response.content.decode()
+    assert 'REQ-2026-0010' in html
+    assert 'Rascunho' in html
+
+
+# ---------------------------------------------------------------------------
+# Detalhe da requisição
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_detalhe_sem_login_redireciona(client, req_enviada_solicitante):
+    response = client.get(
+        reverse('requisicoes:detalhe', kwargs={'pk': req_enviada_solicitante.pk})
+    )
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_detalhe_criador_200(client, solicitante, req_enviada_solicitante):
+    _login(client, solicitante)
+    response = client.get(
+        reverse('requisicoes:detalhe', kwargs={'pk': req_enviada_solicitante.pk})
+    )
+    assert response.status_code == 200
+    assert response.context['requisicao'].pk == req_enviada_solicitante.pk
+
+
+@pytest.mark.django_db
+def test_detalhe_rascunho_de_terceiro_para_beneficiario_404(
+    client, solicitante, req_rascunho_aux_para_solicitante
+):
+    _login(client, solicitante)
+    response = client.get(
+        reverse(
+            'requisicoes:detalhe',
+            kwargs={'pk': req_rascunho_aux_para_solicitante.pk},
+        )
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_detalhe_outro_setor_sem_papel_404(client, solicitante, req_outro_setor_view):
+    _login(client, solicitante)
+    response = client.get(
+        reverse('requisicoes:detalhe', kwargs={'pk': req_outro_setor_view.pk})
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_detalhe_chefe_setor_ve_requisicao_do_setor(
+    client, chefe_obras, req_enviada_solicitante
+):
+    _login(client, chefe_obras)
+    response = client.get(
+        reverse('requisicoes:detalhe', kwargs={'pk': req_enviada_solicitante.pk})
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_detalhe_chefe_setor_nao_ve_rascunho_de_terceiro(
+    client, chefe_obras, req_rascunho_solicitante
+):
+    _login(client, chefe_obras)
+    response = client.get(
+        reverse('requisicoes:detalhe', kwargs={'pk': req_rascunho_solicitante.pk})
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_detalhe_almox_ve_outro_setor(client, aux_almoxarifado, req_outro_setor_view):
+    _login(client, aux_almoxarifado)
+    response = client.get(
+        reverse('requisicoes:detalhe', kwargs={'pk': req_outro_setor_view.pk})
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_detalhe_renderiza_timeline_e_itens(
+    client, solicitante, material_disponivel, setor_obras
+):
+    _login(client, solicitante)
+    req = criar_requisicao(
+        ator_id=solicitante.pk,
+        beneficiario_id=solicitante.pk,
+        itens=[
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('3'),
+            }
+        ],
+    )
+    response = client.get(reverse('requisicoes:detalhe', kwargs={'pk': req.pk}))
+    assert response.status_code == 200
+    assert list(response.context['itens'])
+    assert list(response.context['eventos'])
