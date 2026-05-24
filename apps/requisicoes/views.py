@@ -185,7 +185,7 @@ def editar_rascunho_view(request, pk: int):
                 messages.error(request, str(exc))
             else:
                 messages.success(request, 'Rascunho salvo com sucesso.')
-                return redirect('requisicoes:editar_rascunho', pk=requisicao.pk)
+                return redirect('requisicoes:detalhe', pk=requisicao.pk)
 
         return render(
             request,

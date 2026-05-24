@@ -273,6 +273,9 @@ def test_editar_rascunho_post_valido_salva_e_redireciona(
         data,
     )
     assert resp.status_code == 302
+    assert resp['Location'] == reverse(
+        'requisicoes:detalhe', kwargs={'pk': rascunho_solicitante.pk}
+    )
     rascunho_solicitante.refresh_from_db()
     assert rascunho_solicitante.observacao_geral == 'Obs editada'
 
