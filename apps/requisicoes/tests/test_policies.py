@@ -11,6 +11,7 @@ from apps.requisicoes.models import EstadoRequisicao, Requisicao
 from apps.requisicoes.policies import (
     pode_criar_para_beneficiario,
     pode_editar_rascunho,
+    pode_autorizar_requisicao,
     pode_recusar_requisicao,
     pode_retornar_para_rascunho,
     pode_ser_beneficiario,
@@ -327,6 +328,20 @@ def test_chefe_setor_pode_recusar_requisicao_do_setor(
         setor_beneficiario=setor_obras,
     )
     assert pode_recusar_requisicao(chefe_obras, req) is True
+
+
+@pytest.mark.django_db
+def test_chefe_setor_pode_autorizar_requisicao_do_setor(
+    chefe_obras, solicitante, setor_obras
+):
+    req = Requisicao.objects.create(
+        estado=EstadoRequisicao.AGUARDANDO_AUTORIZACAO,
+        numero_publico='REQ-2026-000105',
+        criador=solicitante,
+        beneficiario=solicitante,
+        setor_beneficiario=setor_obras,
+    )
+    assert pode_autorizar_requisicao(chefe_obras, req) is True
 
 
 @pytest.mark.django_db
