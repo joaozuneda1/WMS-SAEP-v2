@@ -1,4 +1,4 @@
-{% extends "base_auth.html" %}
+{% extends "requisicoes/base.html" %}
 
 {% block title %}
   {% if requisicao.numero_publico %}{{ requisicao.numero_publico }}{% else %}Rascunho #{{ requisicao.pk }}{% endif %} — WMS-SAEP
@@ -146,7 +146,7 @@
           {% if pode_editar %}
             <a
               href="{% url 'requisicoes:editar_rascunho' requisicao.pk %}"
-              class="inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1"
+              class="inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1"
             >
               <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-.793.793-2.828-2.828.793-.793ZM11.379 5.793 3 14.172V17h2.828l8.379-8.379-2.828-2.828Z"/>
@@ -164,7 +164,7 @@
               {% csrf_token %}
               <button
                 type="submit"
-                class="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                class="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 data-submit-loading-label="Enviando…"
               >
                 <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -175,6 +175,104 @@
             </form>
           {% endif %}
         </div>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if pode_retornar or pode_recusar %}
+    <section
+      class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+      aria-labelledby="decisao-autorizacao-titulo"
+    >
+      <div class="mb-4">
+        <h2 id="decisao-autorizacao-titulo" class="text-sm font-semibold text-slate-900">
+          {% if pode_retornar and not pode_recusar %}
+            Retorno para rascunho
+          {% else %}
+            Decisão de autorização
+          {% endif %}
+        </h2>
+        <p class="mt-1 text-sm text-slate-600">
+          {% if pode_retornar and not pode_recusar %}
+            Use este bloco para devolver a requisição ao criador com observação opcional.
+          {% else %}
+            Revise beneficiário, setor e itens antes de registrar a decisão.
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {% if pode_retornar %}
+          <form
+            method="post"
+            action="{% url 'requisicoes:retornar_rascunho' requisicao.pk %}"
+            data-prevent-double-submit
+            class="rounded-lg border border-amber-200 bg-amber-50 p-4"
+          >
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ voltar_url }}">
+            <label for="observacao-retorno" class="block text-sm font-medium text-amber-950">
+              Observação do retorno
+            </label>
+            <p class="mt-1 text-xs text-amber-900">
+              Opcional. A requisição volta a ser rascunho visível apenas ao criador.
+            </p>
+            <textarea
+              id="observacao-retorno"
+              name="observacao"
+              rows="3"
+              class="mt-3 block w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+            ></textarea>
+            <button
+              type="submit"
+              class="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-md border border-amber-700 bg-white px-4 py-2 text-sm font-semibold text-amber-900 shadow-sm hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              data-submit-loading-label="Retornando…"
+            >
+              <span data-submit-text>Confirmar retorno</span>
+            </button>
+          </form>
+        {% endif %}
+
+        {% if pode_recusar %}
+          <form
+            method="post"
+            action="{% url 'requisicoes:recusar' requisicao.pk %}"
+            data-prevent-double-submit
+            data-confirm-message="Confirma a recusa desta requisição? Esta ação encerra a requisição e não pode ser desfeita."
+            class="rounded-lg border border-red-200 bg-red-50 p-4"
+          >
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ voltar_url }}">
+            <label for="motivo-recusa" class="block text-sm font-medium text-red-950">
+              Motivo da recusa <span aria-hidden="true">*</span>
+            </label>
+            <p class="mt-1 text-xs text-red-900">
+              Obrigatório. A recusa encerra a requisição sem reservar ou baixar estoque.
+            </p>
+            <textarea
+              id="motivo-recusa"
+              name="motivo"
+              rows="3"
+              required
+              aria-required="true"
+              {% if recusa_erro %}autofocus{% endif %}
+              {% if recusa_erro %}aria-invalid="true" aria-describedby="motivo-recusa-erro"{% endif %}
+              class="mt-3 block w-full rounded-md border border-red-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1"
+            >{{ motivo_recusa }}</textarea>
+            {% if recusa_erro %}
+              <p id="motivo-recusa-erro" class="mt-2 text-sm font-medium text-red-700" role="alert">
+                {{ recusa_erro }}
+              </p>
+            {% endif %}
+            <button
+              type="submit"
+              class="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              data-submit-loading-label="Recusando…"
+            >
+              <span data-submit-text>Confirmar recusa</span>
+            </button>
+          </form>
+        {% endif %}
       </div>
     </section>
   {% endif %}
@@ -193,7 +291,16 @@
   // Anti double-submit: desabilita só após o tick para não descartar o
   // name/value do submitter clicado.
   document.querySelectorAll('form[data-prevent-double-submit]').forEach((form) => {
-    form.addEventListener('submit', () => {
+    form.addEventListener('submit', (event) => {
+      const confirmMessage = form.dataset.confirmMessage;
+      if (confirmMessage && form.dataset.confirmed !== '1') {
+        if (!window.confirm(confirmMessage)) {
+          event.preventDefault();
+          return;
+        }
+        form.dataset.confirmed = '1';
+      }
+
       const targets = Array.from(form.querySelectorAll('button[type="submit"]'));
       targets.forEach((btn) => {
         if (btn.dataset.submitting === '1') return;
