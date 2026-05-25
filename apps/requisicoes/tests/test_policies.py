@@ -345,6 +345,34 @@ def test_chefe_setor_pode_autorizar_requisicao_do_setor(
 
 
 @pytest.mark.django_db
+def test_chefe_setor_nao_pode_autorizar_requisicao_de_outro_setor(
+    chefe_obras, solicitante, setor_ti
+):
+    req = Requisicao.objects.create(
+        estado=EstadoRequisicao.AGUARDANDO_AUTORIZACAO,
+        numero_publico='REQ-2026-000106',
+        criador=solicitante,
+        beneficiario=solicitante,
+        setor_beneficiario=setor_ti,
+    )
+    assert pode_autorizar_requisicao(chefe_obras, req) is False
+
+
+@pytest.mark.django_db
+def test_chefe_almox_nao_pode_autorizar_requisicao_de_outro_setor(
+    chefe_almoxarifado, solicitante, setor_obras
+):
+    req = Requisicao.objects.create(
+        estado=EstadoRequisicao.AGUARDANDO_AUTORIZACAO,
+        numero_publico='REQ-2026-000107',
+        criador=solicitante,
+        beneficiario=solicitante,
+        setor_beneficiario=setor_obras,
+    )
+    assert pode_autorizar_requisicao(chefe_almoxarifado, req) is False
+
+
+@pytest.mark.django_db
 def test_chefe_almox_nao_recusa_requisicao_de_outro_setor(
     chefe_almoxarifado, solicitante, setor_obras
 ):
