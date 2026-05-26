@@ -113,12 +113,12 @@ Regras aplicadas:
 
 ## Invariants
 
-Pontos relevantes do `docs/design-acesso-rapido/matriz-invariantes.md`:
+Pontos relevantes do `docs/matriz-invariantes.md`:
 
-- **INV-EST-001**: separar para retirada **não** baixa saldo físico nem altera `saldo_reservado`; o teste deve assertir ambos.
-- **INV-REQ-005**: transição precisa estar declarada em `TRANSICOES_VALIDAS` antes de qualquer efeito.
-- **INV-SEC-002**: visibilidade segue o selector único `requisicoes_visiveis_para`; detalhe usa 404 fora do escopo.
-- **INV-AUD-001**: toda transição registra evento de timeline com ator real, estado resultante e metadata vazio quando não há dados extras.
+- **EST-02**: separar para retirada **não** baixa saldo físico nem altera `saldo_reservado`; o teste deve assertir ambos.
+- **EST-06**: operações críticas usam transação e lock; transição precisa estar declarada em `TRANSICOES_VALIDAS` antes de qualquer efeito.
+- **PER-08**: views e services chamam a mesma policy contextual; visibilidade segue o selector único `requisicoes_visiveis_para`.
+- **REQ-08**: toda transição registra evento de timeline com ator real, estado resultante e metadata vazio quando não há dados extras.
 
 ## Risks
 
