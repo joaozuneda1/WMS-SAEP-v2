@@ -22,6 +22,7 @@ from apps.requisicoes.models import (
 from apps.requisicoes.services import (
     autorizar_requisicao,
     criar_requisicao,
+    cancelar_ou_descartar_requisicao,
     cancelar_requisicao,
     descartar_rascunho,
     editar_rascunho,
@@ -608,6 +609,35 @@ def test_cancelar_requisicao_aguardando_autorizacao_sem_justificativa(
     evento = req.eventos.filter(evento=EventoTimeline.CANCELAMENTO).get()
     assert evento.justificativa == ''
     assert not req.eventos.filter(evento=EventoTimeline.LIBERACAO_RESERVA).exists()
+
+
+@pytest.mark.django_db
+def test_cancelar_requisicao_aguardando_autorizacao_ignora_justificativa(
+    requisicao_aguardando, solicitante
+):
+    req = cancelar_requisicao(
+        ator_id=solicitante.pk,
+        requisicao_id=requisicao_aguardando.pk,
+        justificativa='Cancelamento solicitado pelo usuário.',
+    )
+
+    evento = req.eventos.filter(evento=EventoTimeline.CANCELAMENTO).get()
+    assert evento.justificativa == ''
+
+
+@pytest.mark.django_db
+def test_cancelar_ou_descartar_requisicao_aguardando_autorizacao_ignora_justificativa(
+    requisicao_aguardando, solicitante
+):
+    req = cancelar_ou_descartar_requisicao(
+        ator_id=solicitante.pk,
+        requisicao_id=requisicao_aguardando.pk,
+        justificativa='Cancelamento solicitado pelo usuário.',
+    )
+
+    assert req is not None
+    evento = req.eventos.filter(evento=EventoTimeline.CANCELAMENTO).get()
+    assert evento.justificativa == ''
 
 
 @pytest.mark.django_db

@@ -364,10 +364,16 @@ def cancelar_ou_descartar_requisicao(
         )
         return None
 
+    justificativa_cancelamento = (
+        ''
+        if requisicao.estado == EstadoRequisicao.AGUARDANDO_AUTORIZACAO
+        else justificativa or ''
+    )
+
     return _cancelar_requisicao_impl(
         requisicao=requisicao,
         ator_id=ator_id,
-        justificativa=justificativa or '',
+        justificativa=justificativa_cancelamento,
     )
 
 
@@ -509,10 +515,16 @@ def cancelar_requisicao(
             'Requisição não encontrada.', code='requisicao_nao_encontrada'
         ) from None
 
+    justificativa_cancelamento = (
+        ''
+        if requisicao.estado == EstadoRequisicao.AGUARDANDO_AUTORIZACAO
+        else justificativa
+    )
+
     return _cancelar_requisicao_impl(
         requisicao=requisicao,
         ator_id=ator_id,
-        justificativa=justificativa,
+        justificativa=justificativa_cancelamento,
     )
 
 
