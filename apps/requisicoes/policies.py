@@ -13,7 +13,7 @@ from django.db.models import QuerySet
 
 from apps.accounts.models import SetorClassificacao, VinculoAuxiliar
 from apps.core.exceptions import PermissaoNegada
-from apps.requisicoes.models import Requisicao
+from apps.requisicoes.models import EstadoRequisicao, Requisicao
 
 if TYPE_CHECKING:
     from apps.accounts.models import User
@@ -372,8 +372,10 @@ def exigir_pode_separar_para_retirada(ator: User, requisicao: Requisicao) -> Non
 
 
 def pode_atender_retirada(ator: User, requisicao: Requisicao) -> bool:
-    """True se o ator está ativo e é almoxarifado (chefe/auxiliar) ou superusuário."""
+    """True se o ator pode registrar atendimento desta requisição."""
     if not ator.is_active:
+        return False
+    if requisicao.estado != EstadoRequisicao.PRONTA_PARA_RETIRADA:
         return False
     if ator.is_superuser:
         return True

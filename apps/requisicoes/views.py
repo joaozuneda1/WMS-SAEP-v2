@@ -547,13 +547,13 @@ def registrar_atendimento_view(request, pk: int):
     """Aplica TR-016/017 (pronta_para_retirada -> atendida) com total ou parcial."""
     requisicao = get_object_or_404(requisicoes_visiveis_para(request.user.pk), pk=pk)
 
+    if requisicao.estado != EstadoRequisicao.PRONTA_PARA_RETIRADA:
+        messages.warning(request, 'Esta requisição não está pronta para retirada.')
+        return _htmx_redirect(request, reverse('requisicoes:detalhe', args=[pk]))
     if not pode_atender_retirada(request.user, requisicao):
         raise PermissionDenied(
             'Você não tem permissão para registrar o atendimento desta requisição.'
         )
-    if requisicao.estado != EstadoRequisicao.PRONTA_PARA_RETIRADA:
-        messages.warning(request, 'Esta requisição não está pronta para retirada.')
-        return _htmx_redirect(request, reverse('requisicoes:detalhe', args=[pk]))
 
     itens_autorizados = list(
         requisicao.itens.select_related('material')

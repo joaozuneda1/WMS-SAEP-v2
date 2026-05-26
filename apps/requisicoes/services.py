@@ -541,13 +541,12 @@ def registrar_atendimento(
             'Requisição não encontrada.', code='requisicao_nao_encontrada'
         ) from None
 
-    exigir_pode_atender_retirada(ator, requisicao)
-
     if requisicao.estado != EstadoRequisicao.PRONTA_PARA_RETIRADA:
         raise EstadoInvalido(
             'Esta requisição não está pronta para retirada.',
             code='estado_origem_invalido',
         )
+    exigir_pode_atender_retirada(ator, requisicao)
     verificar_transicao_valida(requisicao.estado, EstadoRequisicao.ATENDIDA)
 
     retirante = (retirante_nome or '').strip()
