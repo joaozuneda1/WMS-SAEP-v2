@@ -98,23 +98,23 @@ def _detalhe_context(
         'eventos': eventos,
         'voltar_url': _voltar_url(request),
         'pode_enviar': (
-            requisicao.estado == 'rascunho'
+            requisicao.estado == EstadoRequisicao.RASCUNHO
             and pode_enviar_rascunho(request.user, requisicao)
         ),
         'pode_editar': (
-            requisicao.estado == 'rascunho'
+            requisicao.estado == EstadoRequisicao.RASCUNHO
             and pode_editar_rascunho(request.user, requisicao)
         ),
         'pode_retornar': (
-            requisicao.estado == 'aguardando_autorizacao'
+            requisicao.estado == EstadoRequisicao.AGUARDANDO_AUTORIZACAO
             and pode_retornar_para_rascunho(request.user, requisicao)
         ),
         'pode_autorizar': (
-            requisicao.estado == 'aguardando_autorizacao'
+            requisicao.estado == EstadoRequisicao.AGUARDANDO_AUTORIZACAO
             and pode_autorizar_requisicao(request.user, requisicao)
         ),
         'pode_recusar': (
-            requisicao.estado == 'aguardando_autorizacao'
+            requisicao.estado == EstadoRequisicao.AGUARDANDO_AUTORIZACAO
             and pode_recusar_requisicao(request.user, requisicao)
         ),
         'pode_separar_retirada': (
