@@ -1007,12 +1007,12 @@ def test_separar_para_retirada_aceita_chefe_almox(
 
 
 @pytest.mark.django_db
-def test_separar_para_retirada_nega_superuser(requisicao_autorizada, superuser):
-    with pytest.raises(PermissaoNegada):
-        separar_para_retirada(
-            ator_id=superuser.pk,
-            requisicao_id=requisicao_autorizada.pk,
-        )
+def test_separar_para_retirada_aceita_superuser(requisicao_autorizada, superuser):
+    req = separar_para_retirada(
+        ator_id=superuser.pk,
+        requisicao_id=requisicao_autorizada.pk,
+    )
+    assert req.estado == EstadoRequisicao.PRONTA_PARA_RETIRADA
 
 
 @pytest.mark.django_db

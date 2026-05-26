@@ -459,11 +459,11 @@ def test_chefe_almox_pode_separar_requisicao_autorizada(
 
 
 @pytest.mark.django_db
-def test_superuser_nao_pode_separar(superuser, solicitante, setor_obras):
+def test_superuser_pode_separar(superuser, solicitante, setor_obras):
     req = _req_estado(
         EstadoRequisicao.AUTORIZADA, solicitante, setor_obras, 'REQ-2026-000202'
     )
-    assert pode_separar_para_retirada(superuser, req) is False
+    assert pode_separar_para_retirada(superuser, req) is True
 
 
 @pytest.mark.django_db
