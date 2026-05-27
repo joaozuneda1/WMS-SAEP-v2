@@ -52,7 +52,7 @@
   {% if descricao %}aria-describedby="{{ id }}-descricao"{% endif %}
   @click="backdropClick($event)"
   @keydown.escape.prevent="fechar()"
-  class="m-auto w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-0 text-left text-slate-900 shadow-2xl backdrop:bg-slate-900/50 backdrop:backdrop-blur-sm sm:max-w-2xl"
+  class="m-auto w-full max-w-xl overscroll-contain rounded-2xl border border-slate-200 bg-white p-0 text-left text-slate-900 shadow-2xl backdrop:bg-slate-900/50 backdrop:backdrop-blur-sm sm:max-w-2xl"
 >
   <form
     method="post"
@@ -91,11 +91,11 @@
       {% if form_body_template or erro %}
         <div class="flex-1 overflow-y-auto px-6 py-5">
           {% if erro %}
-            <div data-modal-erro role="alert" class="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-900">
+            <div data-modal-erro aria-live="polite" class="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-900">
               <svg aria-hidden="true" class="mt-0.5 h-4 w-4 shrink-0 text-red-700" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M18 10A8 8 0 1 1 2 10a8 8 0 0 1 16 0Zm-7-4a1 1 0 1 0-2 0v4a1 1 0 1 0 2 0V6Zm-1 8a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4Z" clip-rule="evenodd"/>
               </svg>
-              <span>{{ erro }}</span>
+              <span id="{{ id }}-erro">{{ erro }}</span>
             </div>
           {% endif %}
           {% if form_body_template %}
