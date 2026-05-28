@@ -23,7 +23,7 @@
                 {{ req.numero_publico }}
               </h2>
               <p class="mt-1 text-xs text-slate-500">
-                Atualizada em {{ req.atualizado_em|date:"d/m/Y H:i" }}
+                Autorizada em {% if req.autorizada_em %}{{ req.autorizada_em|date:"d/m/Y H:i" }}{% else %}—{% endif %}
               </p>
             </div>
             {% if req.estado == 'autorizada' %}
@@ -75,7 +75,7 @@
             <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Estado</th>
             <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Beneficiário</th>
             <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Setor</th>
-            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Atualizada em</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Autorizada em</th>
             <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Itens</th>
             <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
               <span class="sr-only">Ações</span>
@@ -102,7 +102,7 @@
                 <span class="text-slate-400">({{ req.beneficiario.matricula }})</span>
               </td>
               <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{{ req.setor_beneficiario.nome }}</td>
-              <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-600">{{ req.atualizado_em|date:"d/m/Y H:i" }}</td>
+              <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-600">{% if req.autorizada_em %}{{ req.autorizada_em|date:"d/m/Y H:i" }}{% else %}—{% endif %}</td>
               <td class="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-slate-700">{{ req.quantidade_itens }}</td>
               <td class="whitespace-nowrap px-4 py-3 text-right text-sm">
                 <a

@@ -23,7 +23,7 @@
                 {{ req.numero_publico }}
               </h2>
               <p class="mt-1 text-xs text-slate-500">
-                Atualizada em {{ req.atualizado_em|date:"d/m/Y H:i" }}
+                Enviada em {% if req.enviada_em %}{{ req.enviada_em|date:"d/m/Y H:i" }}{% else %}—{% endif %}
               </p>
             </div>
             <span class="shrink-0 rounded-full bg-amber-200 px-2.5 py-0.5 text-xs font-semibold text-amber-900 ring-1 ring-inset ring-amber-300">
@@ -64,7 +64,7 @@
             <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Número</th>
             <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Beneficiário</th>
             <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Setor</th>
-            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Atualizada em</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Enviada em</th>
             <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Itens</th>
             <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
               <span class="sr-only">Ações</span>
@@ -80,7 +80,7 @@
                 <span class="text-slate-400">({{ req.beneficiario.matricula }})</span>
               </td>
               <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{{ req.setor_beneficiario.nome }}</td>
-              <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-600">{{ req.atualizado_em|date:"d/m/Y H:i" }}</td>
+              <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-600">{% if req.enviada_em %}{{ req.enviada_em|date:"d/m/Y H:i" }}{% else %}—{% endif %}</td>
               <td class="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-slate-700">{{ req.quantidade_itens }}</td>
               <td class="whitespace-nowrap px-4 py-3 text-right text-sm">
                 <a

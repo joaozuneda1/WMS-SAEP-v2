@@ -2,7 +2,7 @@
 {% load requisicoes_tags %}
 
 {% block title %}
-  {% if requisicao.numero_publico %}{{ requisicao.numero_publico }}{% else %}Rascunho #{{ requisicao.pk }}{% endif %} — WMS-SAEP
+  {% if requisicao.numero_publico %}{{ requisicao.numero_publico }}{% else %}Rascunho{% endif %} — WMS-SAEP
 {% endblock %}
 
 {% block topbar_menu %}{% endblock %}
@@ -14,7 +14,7 @@
     </svg>
   </a>
   <h1 class="app-bar__title">
-    {% if requisicao.numero_publico %}{{ requisicao.numero_publico }}{% else %}Rascunho #{{ requisicao.pk }}{% endif %}
+    {% if requisicao.numero_publico %}{{ requisicao.numero_publico }}{% else %}Rascunho{% endif %}
   </h1>
 {% endblock %}
 
@@ -99,6 +99,12 @@
         <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Atualizada em</dt>
         <dd class="mt-0.5 text-slate-900">{{ requisicao.atualizado_em|date:"d/m/Y H:i" }}</dd>
       </div>
+      {% if enviada_em %}
+      <div>
+        <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Enviada em</dt>
+        <dd class="mt-0.5 text-slate-900">{{ enviada_em|date:"d/m/Y H:i" }}</dd>
+      </div>
+      {% endif %}
       {% if requisicao.observacao_geral %}
         <div class="sm:col-span-2">
           <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Observação</dt>
@@ -373,7 +379,7 @@
       </div>
       <a
         href="{% url 'requisicoes:registrar_atendimento' requisicao.pk %}?next={{ voltar_url|urlencode }}"
-        class="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 sm:w-auto"
+        class="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 sm:w-auto"
       >
         Registrar retirada
       </a>
