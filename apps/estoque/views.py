@@ -175,14 +175,10 @@ def buscar_materiais_saida_excepcional_view(request):
 
 
 @login_required
-@require_http_methods(['GET', 'POST'])
+@require_http_methods(['GET'])
 def detalhe_saida_excepcional_view(request, pk: int):
-    from apps.estoque.policies import (
-        exigir_pode_estornar_saida_excepcional,
-        pode_estornar_saida_excepcional,
-    )
+    from apps.estoque.policies import pode_estornar_saida_excepcional
     from apps.estoque.selectors import buscar_detalhe_saida_excepcional
-    from apps.estoque.services import estornar_saida_excepcional
 
     try:
         exigir_pode_consultar_saidas_excepcionais(request.user)
@@ -197,21 +193,38 @@ def detalhe_saida_excepcional_view(request, pk: int):
 
     pode_estornar = pode_estornar_saida_excepcional(request.user)
 
-    if request.method == 'GET':
-        return render(
-            request,
-            'estoque/detalhe_saida_excepcional.html',
-            {
-                'saida': saida,
-                'pode_estornar': pode_estornar,
-            },
-        )
+    return render(
+        request,
+        'estoque/detalhe_saida_excepcional.html',
+        {
+            'saida': saida,
+            'pode_estornar': pode_estornar,
+        },
+    )
 
-    # POST — ação de estorno
+
+@login_required
+@require_http_methods(['POST'])
+def estornar_saida_excepcional_view(request, pk: int):
+    from apps.estoque.policies import exigir_pode_estornar_saida_excepcional
+    from apps.estoque.selectors import buscar_detalhe_saida_excepcional
+    from apps.estoque.services import estornar_saida_excepcional
+
+    try:
+        exigir_pode_consultar_saidas_excepcionais(request.user)
+    except PermissaoNegada as exc:
+        raise PermissionDenied(str(exc))
+
     try:
         exigir_pode_estornar_saida_excepcional(request.user)
     except PermissaoNegada as exc:
         raise PermissionDenied(str(exc))
+
+    saida = buscar_detalhe_saida_excepcional(saida_id=pk)
+    if saida is None:
+        from django.http import Http404
+
+        raise Http404
 
     justificativa = request.POST.get('justificativa', '').strip()
 
@@ -222,16 +235,8 @@ def detalhe_saida_excepcional_view(request, pk: int):
             justificativa=justificativa,
         )
     except (DadosInvalidos, ConflitoDominio) as exc:
-        saida_atualizada = buscar_detalhe_saida_excepcional(saida_id=pk) or saida
-        return render(
-            request,
-            'estoque/detalhe_saida_excepcional.html',
-            {
-                'saida': saida_atualizada,
-                'pode_estornar': pode_estornar,
-                'erro_estorno': str(exc),
-            },
-        )
+        messages.error(request, str(exc))
+        return redirect('estoque:detalhe_saida_excepcional', pk=pk)
 
     messages.success(request, f'Saída {saida.numero_publico} estornada com sucesso.')
     return redirect('estoque:detalhe_saida_excepcional', pk=pk)
