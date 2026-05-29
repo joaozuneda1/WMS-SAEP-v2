@@ -106,5 +106,5 @@ Regras iniciais:
 - Estornos de saídas excepcionais só podem ser realizados pelo chefe de almoxarifado.
 - Todo estorno deve exigir justificativa obrigatória.
 - O estorno deve devolver automaticamente ao estoque a quantidade estornada.
-- O sistema deve permitir estorno parcial.
+- O sistema deve permitir estorno parcial de requisições (não se aplica a saídas excepcionais, cujo estorno é sempre total no MVP; ver `docs/processos-saida-excepcional.md`).
 - Uma requisição estornada não pode ser corrigida e atendida novamente; o estorno encerra definitivamente aquela requisição.

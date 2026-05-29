@@ -199,6 +199,15 @@ reviews:
         matriz de invariantes, transições de requisição e design-system. Se docs
         e código divergem, sinalize explicitamente em vez de normalizar silêncio.
 
+    - path: ".design/**/*.md"
+      instructions: >
+        Design briefs usam PT-BR e definem contratos de UX. Verifique conflito
+        com CONTEXT.md, ADRs aceitas, docs/CONVENTIONS.md, matriz de permissões,
+        matriz de invariantes e especificações de processo. Revise alinhamento
+        entre decisões de interface, fluxos de navegação, acessibilidade e
+        regras de domínio. Se design e documentação/código divergem, sinalize
+        explicitamente.
+
     - path: "pyproject.toml"
       instructions: >
         Revise impacto em dependências, ruff, pytest, marcadores, Django settings

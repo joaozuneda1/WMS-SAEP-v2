@@ -187,6 +187,16 @@ Tela de detalhe:
 - badge de `Estornada` deve usar semântica de reversão/teal se houver classe
   equivalente; não criar paleta nova para isso.
 
+Requisitos de acessibilidade (ver `.design/saida-excepcional/DESIGN_BRIEF.md`):
+
+- contraste mínimo WCAG AA em textos, badges e botões;
+- todo input deve ter `<label>` explícito;
+- modal de estorno precisa de `role="dialog"`, `aria-modal="true"` e foco gerenciado corretamente;
+- a lista precisa ser navegável por teclado e manter o link de detalhe acessível;
+- o estado precisa ter label textual além da cor;
+- o autocomplete precisa ser utilizável por teclado, com navegação por setas e confirmação da seleção;
+- o botão de ação destrutiva deve deixar explícito o impacto da operação.
+
 ## 1.9 Estrutura canônica
 
 Nomes canônicos da feature:

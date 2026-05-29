@@ -75,8 +75,8 @@ Valores: **Sim**, **Não**, **Apenas próprio setor**, **Qualquer setor**, **Ape
 | Operar movimentação de estoque | Não | Não | Não | Sim | Sim | Sim | Só por operação formal. |
 | Ajustar estoque manualmente | Não | Não | Não | Não | Não | Não | Fora do MVP. |
 | Consultar saídas excepcionais | Não | Não | Não | Sim | Sim | Sim | Lista e detalhe do documento. |
-| Registrar saída excepcional | Não | Não | Não | Não | Sim | Sim | Documento próprio, número `SXP-AAAA-NNNNNN`, baixa física direta, motivo fechado e observação obrigatória. |
-| Estornar saída excepcional | Não | Não | Não | Não | Sim | Sim | Estorno total only; justificativa obrigatória; não cria novo número. |
+| Registrar saída excepcional | Não | Não | Não | Não | Sim | Sim (override técnico) | Documento próprio, número `SXP-AAAA-NNNNNN`, baixa física direta, motivo fechado e observação obrigatória. |
+| Estornar saída excepcional | Não | Não | Não | Não | Sim | Sim (override técnico) | Estorno total only; justificativa obrigatória; não cria novo número. |
 | Consultar histórico de movimentações | Não | Não | Não | Sim | Sim | Sim | Timeline da requisição segue visibilidade da requisição. |
 | Registrar devolução | Não | Não | Não | Sim | Sim | Sim | Vinculada a requisição `atendida`. |
 | Estornar requisição finalizada | Não | Não | Não | Não | Sim | Sim | Apenas chefe de Almoxarifado. |

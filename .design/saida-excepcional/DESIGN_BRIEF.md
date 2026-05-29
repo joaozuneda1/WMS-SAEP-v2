@@ -29,7 +29,7 @@ O design precisa comunicar três coisas sem ambiguidade:
    observação, estoque e itens antes de registrar ou estornar. Operação
    sensível pede contexto visível.
 2. **Consulta ampla, mutação restrita** -- chefe, auxiliar e superuser podem
-   consultar; apenas chefe e override técnico podem registrar/estornar.
+   consultar; apenas chefe e superuser (via override técnico) podem registrar/estornar.
    A interface precisa refletir essa diferença sem botões desabilitados
    confusos.
 3. **Conferência item a item** -- cada material aparece de forma granular,
@@ -100,6 +100,8 @@ O design precisa comunicar três coisas sem ambiguidade:
 - Formulário único com dois blocos:
   - dados da saída: motivo e observação;
   - materiais: busca/autocomplete, adicionar material, quantidade por linha.
+  - não permitir material duplicado no mesmo documento (1 linha por Material);
+    se repetir, bloquear envio e exibir erro claro ao usuário.
 - O usuário precisa ver tudo antes de submeter.
 - Registro é final: ao confirmar, baixa saldo físico imediatamente.
 - O botão primário deve ser `Registrar saída excepcional`.
