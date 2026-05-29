@@ -447,7 +447,9 @@ def estornar_saida_excepcional(
     try:
         saida = SaidaExcepcional.objects.select_for_update().get(pk=saida_id)
     except ObjectDoesNotExist as exc:
-        raise DadosInvalidos('Saída excepcional não encontrada.', code='nao_encontrada') from exc
+        raise DadosInvalidos(
+            'Saída excepcional não encontrada.', code='nao_encontrada'
+        ) from exc
 
     from apps.estoque.models import EstadoSaidaExcepcional
 
@@ -477,6 +479,13 @@ def estornar_saida_excepcional(
     saida.estornado_em = timezone.now()
     saida.estornado_por = ator
     saida.justificativa_estorno = justificativa.strip()
-    saida.save(update_fields=['estado', 'estornado_em', 'estornado_por', 'justificativa_estorno'])
+    saida.save(
+        update_fields=[
+            'estado',
+            'estornado_em',
+            'estornado_por',
+            'justificativa_estorno',
+        ]
+    )
 
     return saida

@@ -55,7 +55,11 @@ class TestListarSaidasExcepcionais:
 
 class TestBuscarDetalheSaidaExcepcional:
     def test_retorna_saida_com_itens(
-        self, chefe_almoxarifado, estoque_principal, material_disponivel, saida_registrada
+        self,
+        chefe_almoxarifado,
+        estoque_principal,
+        material_disponivel,
+        saida_registrada,
     ):
         from apps.estoque.selectors import buscar_detalhe_saida_excepcional
 

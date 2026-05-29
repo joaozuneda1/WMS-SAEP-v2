@@ -221,9 +221,7 @@ class TestEstornarSaidaExcepcional:
         ).saldo_fisico
         assert saldo_depois == saldo_antes + 5
 
-    def test_estorno_duplo_lanca_conflito(
-        self, chefe_almoxarifado, saida_registrada
-    ):
+    def test_estorno_duplo_lanca_conflito(self, chefe_almoxarifado, saida_registrada):
         import pytest
 
         from apps.core.exceptions import ConflitoDominio
