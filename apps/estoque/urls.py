@@ -25,4 +25,9 @@ urlpatterns = [
         views.detalhe_saida_excepcional_view,
         name='detalhe_saida_excepcional',
     ),
+    path(
+        'saidas-excepcionais/<int:pk>/estornar/',
+        views.estornar_saida_excepcional_view,
+        name='estornar_saida_excepcional',
+    ),
 ]

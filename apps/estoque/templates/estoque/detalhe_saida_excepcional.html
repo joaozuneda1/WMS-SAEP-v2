@@ -273,7 +273,7 @@
         Esta ação é irreversível. Todos os itens serão devolvidos ao saldo físico do estoque.
       </p>
 
-      <form method="post" action="{% url 'estoque:detalhe_saida_excepcional' saida.pk %}">
+      <form method="post" action="{% url 'estoque:estornar_saida_excepcional' saida.pk %}">
         {% csrf_token %}
         <div class="mt-4">
           <label for="justificativa" class="block text-sm font-medium text-slate-700">
