@@ -72,7 +72,6 @@ def exigir_pode_estornar_saida_excepcional(ator: User) -> None:
         )
 
 
-
 def pode_visualizar_preview_scpi(ator: 'User') -> bool:
     if not ator.is_active:
         return False

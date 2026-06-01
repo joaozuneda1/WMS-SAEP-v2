@@ -30,4 +30,9 @@ urlpatterns = [
         views.estornar_saida_excepcional_view,
         name='estornar_saida_excepcional',
     ),
+    path(
+        'importacao-scpi/preview/',
+        views.preview_importacao_scpi_view,
+        name='preview_importacao_scpi',
+    ),
 ]

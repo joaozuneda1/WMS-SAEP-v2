@@ -1,3 +1,8 @@
+import csv
+import io
+from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
+
 from django.db.models import Count, QuerySet
 
 from apps.estoque.models import SaidaExcepcional
@@ -39,11 +44,6 @@ def buscar_detalhe_saida_excepcional(saida_id: int) -> SaidaExcepcional | None:
     except SaidaExcepcional.DoesNotExist:
         return None
 
-
-import csv
-import io
-from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
 
 
 @dataclass
@@ -115,10 +115,12 @@ def gerar_preview_importacao_scpi(
     if not linhas_raw:
         return []
 
-    cadpros = [l['cadpro'] for l in linhas_raw]
+    cadpros = [row['cadpro'] for row in linhas_raw]
     materiais = {
         m.codigo: m
-        for m in Material.objects.filter(codigo__in=cadpros).only('id', 'codigo', 'nome')
+        for m in Material.objects.filter(codigo__in=cadpros).only(
+            'id', 'codigo', 'nome'
+        )
     }
     material_ids = [m.id for m in materiais.values()]
     saldos = {
