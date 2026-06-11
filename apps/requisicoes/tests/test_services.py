@@ -1460,6 +1460,99 @@ def test_separar_para_retirada_idempotencia_bloqueia_segunda_execucao(
 
 
 # ---------------------------------------------------------------------------
+# TR-015B: separar_para_retirada — bloqueio por divergência/físico insuficiente
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_tr015b_bloqueia_por_divergencia_critica(
+    requisicao_autorizada, aux_almoxarifado, material_disponivel
+):
+    """TR-015B: divergência crítica pós-autorização bloqueia separação sem efeitos colaterais."""
+    from apps.estoque.models import SaldoEstoque
+
+    saldo = SaldoEstoque.objects.get(material=material_disponivel)
+    saldo.saldo_fisico = saldo.saldo_reservado - 1
+    saldo.save(update_fields=['saldo_fisico'])
+
+    fisico_antes = saldo.saldo_fisico
+    reservado_antes = saldo.saldo_reservado
+    timeline_count_antes = requisicao_autorizada.eventos.count()
+
+    with pytest.raises(DadosInvalidos) as excinfo:
+        separar_para_retirada(
+            ator_id=aux_almoxarifado.pk,
+            requisicao_id=requisicao_autorizada.pk,
+        )
+    assert excinfo.value.code == 'separacao_bloqueada'
+
+    requisicao_autorizada.refresh_from_db()
+    saldo.refresh_from_db()
+    assert requisicao_autorizada.estado == EstadoRequisicao.AUTORIZADA
+    assert saldo.saldo_fisico == fisico_antes
+    assert saldo.saldo_reservado == reservado_antes
+    assert requisicao_autorizada.eventos.count() == timeline_count_antes
+
+
+@pytest.mark.django_db
+def test_tr015b_bloqueia_quando_um_item_diverge_em_req_multi_item(
+    aux_almoxarifado,
+    solicitante,
+    chefe_obras,
+    material_disponivel,
+    material_disponivel_2,
+):
+    """TR-015B: req com dois itens bloqueia quando um material tem divergência pós-auth."""
+    from apps.estoque.models import SaldoEstoque
+    from apps.requisicoes.services import enviar_para_autorizacao
+
+    req = criar_requisicao(
+        ator_id=solicitante.pk,
+        beneficiario_id=solicitante.pk,
+        itens=[
+            {
+                'material_id': material_disponivel.pk,
+                'quantidade_solicitada': Decimal('2'),
+            },
+            {
+                'material_id': material_disponivel_2.pk,
+                'quantidade_solicitada': Decimal('5'),
+            },
+        ],
+    )
+    req = enviar_para_autorizacao(ator_id=solicitante.pk, requisicao_id=req.pk)
+    req = autorizar_requisicao(ator_id=chefe_obras.pk, requisicao_id=req.pk)
+
+    saldo2 = SaldoEstoque.objects.get(material=material_disponivel_2)
+    saldo2.saldo_fisico = saldo2.saldo_reservado - 1
+    saldo2.save(update_fields=['saldo_fisico'])
+
+    saldo1 = SaldoEstoque.objects.get(material=material_disponivel)
+    fisico1_antes = saldo1.saldo_fisico
+    reservado1_antes = saldo1.saldo_reservado
+    fisico2_antes = saldo2.saldo_fisico
+    reservado2_antes = saldo2.saldo_reservado
+    timeline_count_antes = req.eventos.count()
+
+    with pytest.raises(DadosInvalidos) as excinfo:
+        separar_para_retirada(
+            ator_id=aux_almoxarifado.pk,
+            requisicao_id=req.pk,
+        )
+    assert excinfo.value.code == 'separacao_bloqueada'
+
+    req.refresh_from_db()
+    saldo1.refresh_from_db()
+    saldo2.refresh_from_db()
+    assert req.estado == EstadoRequisicao.AUTORIZADA
+    assert saldo1.saldo_fisico == fisico1_antes
+    assert saldo1.saldo_reservado == reservado1_antes
+    assert saldo2.saldo_fisico == fisico2_antes
+    assert saldo2.saldo_reservado == reservado2_antes
+    assert req.eventos.count() == timeline_count_antes
+
+
+# ---------------------------------------------------------------------------
 # TR-016 / TR-017 / TR-018: registrar_atendimento
 # ---------------------------------------------------------------------------
 
