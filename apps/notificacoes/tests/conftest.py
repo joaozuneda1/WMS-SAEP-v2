@@ -2,7 +2,7 @@
 
 import pytest
 
-from apps.accounts.models import Setor, User
+from apps.accounts.models import Setor, SetorClassificacao, User
 from apps.estoque.models import Estoque, Material, SaldoEstoque, UnidadeMedida
 from apps.notificacoes.models import Notificacao, TipoNotificacao
 
@@ -14,7 +14,11 @@ def setor_obras(db):
 
 @pytest.fixture
 def setor_almoxarifado(db):
-    return Setor.objects.create(nome='Almoxarifado', codigo='ALM')
+    return Setor.objects.create(
+        nome='Almoxarifado',
+        codigo='ALM',
+        classificacao=SetorClassificacao.ALMOXARIFADO,
+    )
 
 
 @pytest.fixture
@@ -26,7 +30,7 @@ def chefe_obras(db, setor_obras):
         setor=setor_obras,
     )
     setor_obras.chefe = u
-    setor_obras.save()
+    setor_obras.save(update_fields=['chefe'])
     return u
 
 
@@ -59,7 +63,7 @@ def chefe_almoxarifado(db, setor_almoxarifado):
         setor=setor_almoxarifado,
     )
     setor_almoxarifado.chefe = u
-    setor_almoxarifado.save()
+    setor_almoxarifado.save(update_fields=['chefe'])
     return u
 
 

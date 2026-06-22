@@ -38,6 +38,8 @@ from apps.requisicoes.models import (
     SequenciaRequisicao,
     TimelineRequisicao,
 )
+from apps.notificacoes.models import TipoNotificacao
+from apps.notificacoes.services import criar_notificacoes_para
 from apps.requisicoes.policies import (
     exigir_pode_autorizar_requisicao,
     exigir_pode_cancelar_requisicao,
@@ -618,6 +620,18 @@ def recusar_requisicao(
         justificativa=motivo_limpo,
     )
 
+    _criador_id = requisicao.criador_id
+    _beneficiario_id = requisicao.beneficiario_id
+    _req_id = requisicao.pk
+    transaction.on_commit(
+        lambda: criar_notificacoes_para(
+            criador_id=_criador_id,
+            beneficiario_id=_beneficiario_id,
+            requisicao_id=_req_id,
+            tipo=TipoNotificacao.RECUSA,
+        )
+    )
+
     return requisicao
 
 
@@ -691,6 +705,18 @@ def autorizar_requisicao(
         ator=ator,
         estado_resultante=EstadoRequisicao.AUTORIZADA,
         metadata=metadata,
+    )
+
+    _criador_id = requisicao.criador_id
+    _beneficiario_id = requisicao.beneficiario_id
+    _req_id = requisicao.pk
+    transaction.on_commit(
+        lambda: criar_notificacoes_para(
+            criador_id=_criador_id,
+            beneficiario_id=_beneficiario_id,
+            requisicao_id=_req_id,
+            tipo=TipoNotificacao.AUTORIZACAO,
+        )
     )
 
     return requisicao
@@ -964,6 +990,18 @@ def registrar_atendimento(
         ator=ator,
         estado_resultante=EstadoRequisicao.ATENDIDA,
         metadata=metadata_principal,
+    )
+
+    _criador_id = requisicao.criador_id
+    _beneficiario_id = requisicao.beneficiario_id
+    _req_id = requisicao.pk
+    transaction.on_commit(
+        lambda: criar_notificacoes_para(
+            criador_id=_criador_id,
+            beneficiario_id=_beneficiario_id,
+            requisicao_id=_req_id,
+            tipo=TipoNotificacao.ATENDIMENTO,
+        )
     )
 
     return requisicao

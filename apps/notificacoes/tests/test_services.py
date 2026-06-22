@@ -51,7 +51,7 @@ def test_criar_notificacoes_mesmo_usuario_uma_notificacao(solicitante):
 
 @pytest.mark.django_db(transaction=True)
 def test_autorizar_requisicao_gera_notificacoes(
-    chefe_obras, solicitante, outro_solicitante, material_disponivel
+    chefe_obras, outro_solicitante, material_disponivel
 ):
     """autorizar_requisicao dispara notificações para criador e beneficiário."""
     from apps.requisicoes.services import (
@@ -60,12 +60,13 @@ def test_autorizar_requisicao_gera_notificacoes(
         enviar_para_autorizacao,
     )
 
+    # chefe_obras cria para outro_solicitante (mesmo setor → permitido)
     req = criar_requisicao(
-        ator_id=solicitante.pk,
+        ator_id=chefe_obras.pk,
         beneficiario_id=outro_solicitante.pk,
         itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('2')}],
     )
-    enviar_para_autorizacao(ator_id=solicitante.pk, requisicao_id=req.pk)
+    enviar_para_autorizacao(ator_id=chefe_obras.pk, requisicao_id=req.pk)
     autorizar_requisicao(ator_id=chefe_obras.pk, requisicao_id=req.pk)
 
     notifs = Notificacao.objects.filter(
@@ -74,12 +75,12 @@ def test_autorizar_requisicao_gera_notificacoes(
     )
     assert notifs.count() == 2
     destinatarios = set(notifs.values_list('destinatario_id', flat=True))
-    assert destinatarios == {solicitante.pk, outro_solicitante.pk}
+    assert destinatarios == {chefe_obras.pk, outro_solicitante.pk}
 
 
 @pytest.mark.django_db(transaction=True)
 def test_recusar_requisicao_gera_notificacoes(
-    chefe_obras, solicitante, outro_solicitante, material_disponivel
+    chefe_obras, outro_solicitante, material_disponivel
 ):
     """recusar_requisicao dispara notificações para criador e beneficiário."""
     from apps.requisicoes.services import (
@@ -89,11 +90,11 @@ def test_recusar_requisicao_gera_notificacoes(
     )
 
     req = criar_requisicao(
-        ator_id=solicitante.pk,
+        ator_id=chefe_obras.pk,
         beneficiario_id=outro_solicitante.pk,
         itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('1')}],
     )
-    enviar_para_autorizacao(ator_id=solicitante.pk, requisicao_id=req.pk)
+    enviar_para_autorizacao(ator_id=chefe_obras.pk, requisicao_id=req.pk)
     recusar_requisicao(
         ator_id=chefe_obras.pk,
         requisicao_id=req.pk,
@@ -105,27 +106,29 @@ def test_recusar_requisicao_gera_notificacoes(
         tipo=TipoNotificacao.RECUSA,
     )
     assert notifs.count() == 2
+    destinatarios = set(notifs.values_list('destinatario_id', flat=True))
+    assert destinatarios == {chefe_obras.pk, outro_solicitante.pk}
 
 
 @pytest.mark.django_db(transaction=True)
 def test_registrar_atendimento_gera_notificacoes(
-    chefe_obras, chefe_almoxarifado, solicitante, outro_solicitante, material_disponivel
+    chefe_obras, chefe_almoxarifado, outro_solicitante, material_disponivel
 ):
     """registrar_atendimento dispara notificações para criador e beneficiário."""
     from apps.requisicoes.services import (
-        criar_requisicao,
         autorizar_requisicao,
+        criar_requisicao,
         enviar_para_autorizacao,
         registrar_atendimento,
         separar_para_retirada,
     )
 
     req = criar_requisicao(
-        ator_id=solicitante.pk,
+        ator_id=chefe_obras.pk,
         beneficiario_id=outro_solicitante.pk,
         itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('1')}],
     )
-    enviar_para_autorizacao(ator_id=solicitante.pk, requisicao_id=req.pk)
+    enviar_para_autorizacao(ator_id=chefe_obras.pk, requisicao_id=req.pk)
     autorizar_requisicao(ator_id=chefe_obras.pk, requisicao_id=req.pk)
     separar_para_retirada(ator_id=chefe_almoxarifado.pk, requisicao_id=req.pk)
 
@@ -142,6 +145,8 @@ def test_registrar_atendimento_gera_notificacoes(
         tipo=TipoNotificacao.ATENDIMENTO,
     )
     assert notifs.count() == 2
+    destinatarios = set(notifs.values_list('destinatario_id', flat=True))
+    assert destinatarios == {chefe_obras.pk, outro_solicitante.pk}
 
 
 @pytest.mark.django_db(transaction=True)
@@ -173,10 +178,10 @@ def test_autorizar_requisicao_criador_igual_beneficiario_uma_notificacao(
 @pytest.mark.django_db(transaction=True)
 def test_rollback_sem_notificacoes(solicitante, material_disponivel):
     """Se transação rolar back, on_commit não dispara → zero notificações."""
-    from apps.core.exceptions import EstadoInvalido
+    from apps.core.exceptions import DadosInvalidos
     from apps.requisicoes.services import autorizar_requisicao
 
-    with pytest.raises(EstadoInvalido):
+    with pytest.raises(DadosInvalidos):
         autorizar_requisicao(ator_id=solicitante.pk, requisicao_id=99999)
 
     assert Notificacao.objects.count() == 0
@@ -189,7 +194,7 @@ def test_rollback_sem_notificacoes(solicitante, material_disponivel):
 
 @pytest.mark.django_db(transaction=True)
 def test_divergencia_estoque_gera_notificacoes_para_requisicao_afetada(
-    chefe_obras, chefe_almoxarifado, solicitante, outro_solicitante,
+    chefe_obras, chefe_almoxarifado, outro_solicitante,
     material_disponivel, estoque_principal
 ):
     """Importação SCPI com divergência crítica → notifica criador e beneficiário."""
@@ -201,14 +206,14 @@ def test_divergencia_estoque_gera_notificacoes_para_requisicao_afetada(
     )
 
     req = criar_requisicao(
-        ator_id=solicitante.pk,
+        ator_id=chefe_obras.pk,
         beneficiario_id=outro_solicitante.pk,
         itens=[{'material_id': material_disponivel.pk, 'quantidade_solicitada': Decimal('50')}],
     )
-    enviar_para_autorizacao(ator_id=solicitante.pk, requisicao_id=req.pk)
+    enviar_para_autorizacao(ator_id=chefe_obras.pk, requisicao_id=req.pk)
     autorizar_requisicao(ator_id=chefe_obras.pk, requisicao_id=req.pk)
 
-    # Após autorização, saldo_reservado = 50. Vamos importar CSV com fisico=10 (< reservado).
+    # Importar com fisico=10 → saldo_reservado=50 > fisico=10 → divergência crítica
     csv_content = f'CADPRO;DENOMINACAO;QUAN3\n{material_disponivel.codigo};Parafuso M6;000.000.010'
     preview = preview_importacao_scpi(
         ator_id=chefe_almoxarifado.pk,
@@ -226,7 +231,7 @@ def test_divergencia_estoque_gera_notificacoes_para_requisicao_afetada(
     )
     assert notifs.count() == 2
     destinatarios = set(notifs.values_list('destinatario_id', flat=True))
-    assert destinatarios == {solicitante.pk, outro_solicitante.pk}
+    assert destinatarios == {chefe_obras.pk, outro_solicitante.pk}
 
 
 @pytest.mark.django_db(transaction=True)
