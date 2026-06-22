@@ -71,7 +71,9 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _notificar_pos_commit(criador_id: int, beneficiario_id: int, req_id: int, tipo: str) -> None:
+def _notificar_pos_commit(
+    criador_id: int, beneficiario_id: int, req_id: int, tipo: str
+) -> None:
     try:
         criar_notificacoes_para(
             criador_id=criador_id,
@@ -81,7 +83,9 @@ def _notificar_pos_commit(criador_id: int, beneficiario_id: int, req_id: int, ti
         )
     except Exception:
         logger.exception(
-            'Falha ao criar notificações pós-commit: tipo=%s requisicao_id=%s', tipo, req_id
+            'Falha ao criar notificações pós-commit: tipo=%s requisicao_id=%s',
+            tipo,
+            req_id,
         )
 
 
@@ -647,7 +651,9 @@ def recusar_requisicao(
     _beneficiario_id = requisicao.beneficiario_id
     _req_id = requisicao.pk
     transaction.on_commit(
-        lambda: _notificar_pos_commit(_criador_id, _beneficiario_id, _req_id, TipoNotificacao.RECUSA)
+        lambda: _notificar_pos_commit(
+            _criador_id, _beneficiario_id, _req_id, TipoNotificacao.RECUSA
+        )
     )
 
     return requisicao
@@ -729,7 +735,9 @@ def autorizar_requisicao(
     _beneficiario_id = requisicao.beneficiario_id
     _req_id = requisicao.pk
     transaction.on_commit(
-        lambda: _notificar_pos_commit(_criador_id, _beneficiario_id, _req_id, TipoNotificacao.AUTORIZACAO)
+        lambda: _notificar_pos_commit(
+            _criador_id, _beneficiario_id, _req_id, TipoNotificacao.AUTORIZACAO
+        )
     )
 
     return requisicao
@@ -1009,7 +1017,9 @@ def registrar_atendimento(
     _beneficiario_id = requisicao.beneficiario_id
     _req_id = requisicao.pk
     transaction.on_commit(
-        lambda: _notificar_pos_commit(_criador_id, _beneficiario_id, _req_id, TipoNotificacao.ATENDIMENTO)
+        lambda: _notificar_pos_commit(
+            _criador_id, _beneficiario_id, _req_id, TipoNotificacao.ATENDIMENTO
+        )
     )
 
     return requisicao
