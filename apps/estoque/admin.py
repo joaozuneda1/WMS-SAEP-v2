@@ -19,21 +19,55 @@ class MaterialAdmin(admin.ModelAdmin):
     search_fields = ('codigo', 'nome')
     ordering = ('nome',)
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_form(self, request, obj=None, **kwargs):
+        Form = super().get_form(request, obj, **kwargs)
+        _initial_ativo = obj.ativo if (obj and obj.pk) else True
+
+        class MaterialFormComValidacao(Form):
+            def __init__(inner, *args, **kw):
+                super().__init__(*args, **kw)
+                inner._request = request
+                inner._initial_ativo = _initial_ativo
+
+            def clean(inner):
+                cleaned_data = super().clean()
+                deve_desativar = (
+                    inner.instance.pk
+                    and not inner.errors
+                    and 'ativo' in inner.changed_data
+                    and not cleaned_data.get('ativo')
+                    and inner._initial_ativo
+                )
+                if deve_desativar:
+                    from apps.core.exceptions import ErroDominio, PermissaoNegada
+                    from apps.estoque.services import desativar_material
+
+                    try:
+                        desativar_material(
+                            ator_id=inner._request.user.pk,
+                            material_id=inner.instance.pk,
+                        )
+                    except PermissaoNegada as exc:
+                        from django.core.exceptions import PermissionDenied
+
+                        raise PermissionDenied(str(exc)) from exc
+                    except ErroDominio as exc:
+                        from django import forms
+
+                        raise forms.ValidationError(str(exc)) from exc
+                return cleaned_data
+
+        MaterialFormComValidacao.__name__ = Form.__name__
+        MaterialFormComValidacao.__qualname__ = Form.__qualname__
+        return MaterialFormComValidacao
+
     def save_model(self, request, obj, form, change):
-        if change and 'ativo' in form.changed_data and not obj.ativo:
-            from django.core.exceptions import ValidationError
-
-            from apps.core.exceptions import ErroDominio
-            from apps.estoque.services import desativar_material
-
-            try:
-                desativar_material(ator_id=request.user.pk, material_id=obj.pk)
-            except ErroDominio as exc:
-                raise ValidationError(str(exc)) from exc
         super().save_model(request, obj, form, change)
 
     def delete_model(self, request, obj):
-        from django.contrib.admin import helpers
         from django.core.exceptions import PermissionDenied
 
         raise PermissionDenied(
