@@ -102,7 +102,22 @@ class VinculoAuxiliarAdmin(admin.ModelAdmin):
         )
 
     def save_model(self, request, obj, form, change):
+        from apps.core.exceptions import ConflitoDominio
+
+        if not change and not obj.ativo:
+            raise ConflitoDominio(
+                'Não é permitido criar vínculo auxiliar já inativo pelo admin.',
+                code='vinculo_inativo_admin',
+            )
+
         if 'ativo' in form.changed_data:
+            campos_identidade = {'usuario', 'setor'} & set(form.changed_data)
+            if change and campos_identidade:
+                raise ConflitoDominio(
+                    'Altere usuário/setor separadamente da ativação do vínculo auxiliar.',
+                    code='vinculo_identidade_com_status',
+                )
+
             from apps.accounts.services import (
                 ativar_vinculo_auxiliar,
                 desativar_vinculo_auxiliar,
