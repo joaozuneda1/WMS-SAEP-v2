@@ -84,8 +84,16 @@ class UserAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if change and 'is_active' in form.changed_data and not obj.is_active:
             from apps.accounts.services import desativar_usuario
+            from apps.core.exceptions import ConflitoDominio
 
+            campos_extras = set(form.changed_data) - {'is_active'}
+            if campos_extras:
+                raise ConflitoDominio(
+                    'Desative o usuário separadamente de outras alterações de cadastro.',
+                    code='desativacao_com_campos_extras',
+                )
             desativar_usuario(ator_id=request.user.pk, usuario_id=obj.pk)
+            return  # service já persistiu; super sobrescreveria dados de auditoria
         super().save_model(request, obj, form, change)
 
 
