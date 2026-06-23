@@ -128,6 +128,19 @@ class TestTrocarChefeSetor:
             )
         assert exc_info.value.code == 'chefe_duplicado'
 
+    def test_ator_nao_superusuario_lanca_permissao_negada(
+        self, setor_a, usuario_ativo_a, usuario_ativo_b
+    ):
+        from apps.core.exceptions import PermissaoNegada
+        from apps.accounts.services import trocar_chefe_setor
+
+        with pytest.raises(PermissaoNegada):
+            trocar_chefe_setor(
+                ator_id=usuario_ativo_a.pk,
+                setor_id=setor_a.pk,
+                novo_chefe_id=usuario_ativo_b.pk,
+            )
+
 
 # ---------------------------------------------------------------------------
 # TestDesativarUsuario — USR-07
@@ -180,6 +193,15 @@ class TestDesativarUsuario:
         desativar_usuario(ator_id=superusuario.pk, usuario_id=usuario_inativo.pk)
         usuario_inativo.refresh_from_db()
         assert usuario_inativo.is_active is False
+
+    def test_ator_nao_superusuario_lanca_permissao_negada(
+        self, setor_a, usuario_ativo_a, usuario_ativo_b
+    ):
+        from apps.core.exceptions import PermissaoNegada
+        from apps.accounts.services import desativar_usuario
+
+        with pytest.raises(PermissaoNegada):
+            desativar_usuario(ator_id=usuario_ativo_a.pk, usuario_id=usuario_ativo_b.pk)
 
 
 # ---------------------------------------------------------------------------
@@ -241,3 +263,16 @@ class TestVinculoAuxiliar:
         with pytest.raises(ConflitoDominio) as exc_info:
             desativar_vinculo_auxiliar(ator_id=superusuario.pk, vinculo_id=vinculo.pk)
         assert exc_info.value.code == 'vinculo_ja_inativo'
+
+    def test_ator_nao_superusuario_lanca_permissao_negada(
+        self, setor_a, usuario_ativo_a, usuario_ativo_b
+    ):
+        from apps.core.exceptions import PermissaoNegada
+        from apps.accounts.services import ativar_vinculo_auxiliar
+
+        with pytest.raises(PermissaoNegada):
+            ativar_vinculo_auxiliar(
+                ator_id=usuario_ativo_a.pk,
+                usuario_id=usuario_ativo_b.pk,
+                setor_id=setor_a.pk,
+            )

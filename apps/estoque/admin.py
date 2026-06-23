@@ -30,8 +30,20 @@ class MaterialAdmin(admin.ModelAdmin):
                 desativar_material(ator_id=request.user.pk, material_id=obj.pk)
             except ErroDominio as exc:
                 raise ValidationError(str(exc)) from exc
-            return
         super().save_model(request, obj, form, change)
+
+    def delete_model(self, request, obj):
+        from django.contrib.admin import helpers
+        from django.core.exceptions import PermissionDenied
+
+        raise PermissionDenied(
+            "Materiais não podem ser excluídos. Use o campo 'ativo' para desativar."
+        )
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        actions.pop('delete_selected', None)
+        return actions
 
 
 @admin.register(Estoque)

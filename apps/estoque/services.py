@@ -859,7 +859,9 @@ def desativar_material(*, ator_id: int, material_id: int) -> None:
     if not material.ativo:
         return
 
-    saldos = list(SaldoEstoque.objects.filter(material_id=material_id))
+    saldos = list(
+        SaldoEstoque.objects.select_for_update().filter(material_id=material_id)
+    )
     for saldo in saldos:
         if saldo.saldo_fisico != 0:
             raise ConflitoDominio(

@@ -16,7 +16,7 @@ def trocar_chefe_setor(*, ator_id: int, setor_id: int, novo_chefe_id: int) -> No
     try:
         ator = User.objects.get(pk=ator_id)
         setor = Setor.objects.select_for_update().get(pk=setor_id)
-        novo_chefe = User.objects.get(pk=novo_chefe_id)
+        novo_chefe = User.objects.select_for_update().get(pk=novo_chefe_id)
     except ObjectDoesNotExist as exc:
         raise DadosInvalidos(
             'Referência inválida.', code='referencia_invalida'
@@ -105,18 +105,25 @@ def ativar_vinculo_auxiliar(
 
     exigir_pode_gerir_cadastro(ator)
 
-    if VinculoAuxiliar.objects.filter(
-        usuario=usuario, setor=setor, ativo=True
-    ).exists():
+    vinculo = (
+        VinculoAuxiliar.objects.select_for_update()
+        .filter(usuario=usuario, setor=setor)
+        .first()
+    )
+    if vinculo and vinculo.ativo:
         raise ConflitoDominio(
             f"Vínculo auxiliar já está ativo para '{usuario.nome}' no setor '{setor.nome}'.",
             code='vinculo_ja_ativo',
         )
 
-    vinculo, _ = VinculoAuxiliar.objects.get_or_create(usuario=usuario, setor=setor)
-    vinculo.ativo = True
-    vinculo.desativado_em = None
-    vinculo.save(update_fields=['ativo', 'desativado_em'])
+    if vinculo:
+        vinculo.ativo = True
+        vinculo.desativado_em = None
+        vinculo.save(update_fields=['ativo', 'desativado_em'])
+    else:
+        vinculo = VinculoAuxiliar.objects.create(
+            usuario=usuario, setor=setor, ativo=True
+        )
     return vinculo
 
 

@@ -25,7 +25,6 @@ class SetorAdmin(admin.ModelAdmin):
                 )
             except ErroDominio as exc:
                 raise ValidationError(str(exc)) from exc
-            return
         super().save_model(request, obj, form, change)
 
 
@@ -64,7 +63,6 @@ class UserAdmin(admin.ModelAdmin):
                 desativar_usuario(ator_id=request.user.pk, usuario_id=obj.pk)
             except ErroDominio as exc:
                 raise ValidationError(str(exc)) from exc
-            return
         super().save_model(request, obj, form, change)
 
 
@@ -98,5 +96,4 @@ class VinculoAuxiliarAdmin(admin.ModelAdmin):
                     )
             except ErroDominio as exc:
                 raise ValidationError(str(exc)) from exc
-            return
         super().save_model(request, obj, form, change)
