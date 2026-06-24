@@ -621,7 +621,7 @@ class TestMovimentacoesVisiveisPara:
         assert not movimentacoes_visiveis_para(solicitante.pk).exists()
 
     @pytest.mark.django_db
-    def test_ordenacao_mais_recente_primeiro(
+    def test_ordenacao_por_criado_em_decrescente(
         self, superuser, requisicao_autorizada, material_disponivel, estoque_principal
     ):
         from decimal import Decimal
@@ -630,14 +630,19 @@ class TestMovimentacoesVisiveisPara:
         from apps.estoque.selectors import movimentacoes_visiveis_para
 
         req, _ = requisicao_autorizada
-        recente = MovimentacaoEstoque.objects.create(
-            tipo=TipoMovimentacaoEstoque.CONSUMO,
-            material=material_disponivel,
-            estoque=estoque_principal,
-            delta_fisico=Decimal('-1'),
-            delta_reservado=Decimal('-1'),
-            requisicao=req,
-            ator=superuser,
-        )
-        visiveis = list(movimentacoes_visiveis_para(superuser.pk))
-        assert visiveis[0].pk == recente.pk
+        for _ in range(2):
+            MovimentacaoEstoque.objects.create(
+                tipo=TipoMovimentacaoEstoque.CONSUMO,
+                material=material_disponivel,
+                estoque=estoque_principal,
+                delta_fisico=Decimal('-1'),
+                delta_reservado=Decimal('-1'),
+                requisicao=req,
+                ator=superuser,
+            )
+
+        criados = [m.criado_em for m in movimentacoes_visiveis_para(superuser.pk)]
+        # Contrato order_by('-criado_em'): timestamps em ordem não-crescente,
+        # asseverado diretamente sobre criado_em (não via pk).
+        assert len(criados) >= 2
+        assert criados == sorted(criados, reverse=True)

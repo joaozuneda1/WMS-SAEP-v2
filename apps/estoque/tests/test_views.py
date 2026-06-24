@@ -725,7 +725,7 @@ class TestHistoricoMovimentacoesView:
         response = client.get(URL_MOVIMENTACOES)
         assert 'page_obj' in response.context
 
-    def test_queryset_escopado_por_papel(
+    def test_view_alimenta_page_obj_com_selector_escopado(
         self,
         client,
         chefe_obras,
@@ -733,14 +733,18 @@ class TestHistoricoMovimentacoesView:
         saida_registrada,
         movimentacao_outro_setor,
     ):
+        # Contrato HTTP/render: a view delega o escopo ao selector e pagina o
+        # resultado. A matriz de visibilidade em si é coberta em test_selectors.
+        from apps.estoque.selectors import movimentacoes_visiveis_para
+
         client.force_login(chefe_obras)
         response = client.get(URL_MOVIMENTACOES)
-        visiveis = list(response.context['page_obj'].object_list)
-        # Não vê saída excepcional nem movimentação de outro setor.
-        assert all(m.saida_excepcional_id is None for m in visiveis)
-        assert movimentacao_outro_setor.pk not in {m.pk for m in visiveis}
-        # Vê pelo menos a reserva do próprio setor.
-        assert any(m.requisicao_id is not None for m in visiveis)
+        assert response.status_code == 200
+        assert 'estoque/historico_movimentacoes.html' in {
+            t.name for t in response.templates
+        }
+        esperado = movimentacoes_visiveis_para(chefe_obras.pk).count()
+        assert response.context['page_obj'].paginator.count == esperado
 
     def test_paginacao_server_side(
         self,
