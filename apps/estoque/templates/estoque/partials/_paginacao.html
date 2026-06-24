@@ -1,5 +1,7 @@
-{# Paginação server-side reutilizável. Recebe `page_obj` (Paginator page).
-   Navegação por links GET (?page=N). Alvos de toque min-h-11, focáveis. #}
+{% comment %}
+Paginação server-side reutilizável. Recebe `page_obj` (Paginator page).
+Navegação por links GET (?page=N). Alvos de toque min-h-11, focáveis.
+{% endcomment %}
 {% if page_obj.paginator.num_pages > 1 %}
   <nav
     class="mt-6 flex items-center justify-between gap-3"

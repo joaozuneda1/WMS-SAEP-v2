@@ -1,8 +1,10 @@
-{# Badge semântico por TipoMovimentacaoEstoque. Recebe `tipo` (value) e `rotulo`
-   (get_tipo_display). A cor comunica a identidade do tipo (não alarme); o rótulo
-   textual é sempre o portador primário do significado (acessibilidade: cor nunca
-   é o único portador). Classes literais por ramo para o JIT do Tailwind compilar.
-   Par fundo-100/texto-900 garante contraste WCAG AA. #}
+{% comment %}
+Badge semântico por TipoMovimentacaoEstoque. Recebe `tipo` (value) e `rotulo`
+(get_tipo_display). A cor comunica a identidade do tipo (não alarme); o rótulo
+textual é sempre o portador primário do significado (acessibilidade: cor nunca
+é o único portador). Classes literais por ramo para o JIT do Tailwind compilar.
+Par fundo-100/texto-900 garante contraste WCAG AA.
+{% endcomment %}
 {% if tipo == 'reserva' %}
   <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-900 ring-1 ring-inset ring-blue-200">{{ rotulo }}</span>
 {% elif tipo == 'liberacao' %}

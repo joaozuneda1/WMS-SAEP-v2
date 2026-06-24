@@ -787,3 +787,14 @@ class TestHistoricoMovimentacoesView:
         client.force_login(chefe_almoxarifado)
         response = client.get(URL_MOVIMENTACOES)
         assert URL_MOVIMENTACOES.encode() in response.content
+
+    def test_comentarios_dos_partials_nao_vazam_para_a_tela(
+        self, client, superuser, requisicao_autorizada
+    ):
+        # Comentário multilinha precisa ser {% comment %}, não {# #} (que é
+        # single-line) — senão o texto do comentário renderiza como conteúdo.
+        client.force_login(superuser)
+        response = client.get(URL_MOVIMENTACOES)
+        assert 'Badge semântico'.encode() not in response.content
+        assert 'Célula de delta'.encode() not in response.content
+        assert 'Paginação server-side'.encode() not in response.content
