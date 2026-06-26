@@ -45,6 +45,9 @@ _Avoid_: requerente
 **Papel efetivo**:
 O papel que um ator exerce diante de um Setor ou requisição específicos,
 calculado a partir do ator e do contexto — nunca um atributo fixo do Usuário.
+É um snapshot do momento da operação: derivado uma vez e reutilizado durante
+o caso de uso, não um estado vivo que se atualiza sozinho se vínculos ou
+chefias mudarem no meio da transação.
 
 ### Atores da requisição
 
@@ -112,6 +115,30 @@ conferência antes de confirmar a importação.
 **Resumo de importação SCPI**:
 Resumo textual mínimo do resultado da importação: quantos materiais novos
 foram criados, quantas linhas divergiram e quantos alertas foram gerados.
+
+### Operações e ciclo da requisição
+
+**Operação (de requisição)**:
+Ação de domínio que transiciona uma Requisição entre estados (enviar,
+autorizar, recusar, retornar, separar, atender, devolver, estornar, cancelar).
+Cada Operação declara, numa fonte única, seus estados de origem válidos, o
+estado de destino e o evento de timeline. Não se confunde com o botão da
+interface: o botão é apresentação, a Operação é domínio.
+
+**Ações disponíveis**:
+Conjunto de Operações que um ator, com seu **Papel efetivo**, pode executar
+sobre uma Requisição no estado atual. Derivado da tabela de transições mais as
+policies — a tabela responde "a Operação é permitida neste estado?" e a policy
+responde "este papel pode executá-la?". UI, autorização e serviços consomem a
+mesma definição, sem reconstruir o grafo de estados.
+
+**Variante de cancelamento**:
+Classificação do cancelamento de uma Requisição conforme o estado de origem.
+**Descarte** = rascunho nunca enviado (sem número público), removido sem
+timeline. **Cancelamento** = encerra a requisição já numerada, preserva o
+número público e, a partir da autorização, libera as reservas de estoque.
+Descarte é uma variante do cancelamento, não uma operação à parte; a variante
+apenas classifica o caso — os efeitos vivem nos handlers.
 
 ### Quantidades
 

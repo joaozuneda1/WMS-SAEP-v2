@@ -46,3 +46,64 @@ A regra operacional detalhada para agentes fica em `docs/CONVENTIONS.md`.
 ## Trade-off
 
 Mais arquivos e indireção por app do que um Django de "views gordas + models". Aceita-se em troca de fronteiras testáveis, autorização única e um codebase navegável por agentes de IA.
+
+## Emenda — 2026-06-26 (revisão de arquitetura)
+
+Três refinamentos ao layout, derivados de uma sessão de deepening, em pontos onde
+casos de uso compostos vazavam para as views.
+
+### Service atômico vs. service composto; dono único da transação
+
+- **Service atômico** — executa **uma** operação de domínio (no sentido de
+  **Operação** do glossário: transição origem→destino + evento de timeline; é o
+  mesmo conceito de "operação" usado em ADR-0011 e em `transitions.py`).
+- **Service composto** — orquestra **vários** services atômicos e é o **dono da
+  `transaction.atomic`**. É **orquestrador sem lógica de domínio própria**: não
+  duplica lógica, apenas coordena e ordena a execução, sem mutar estado
+  diretamente.
+
+A view **seleciona** qual caso de uso executar; nunca abre transação nem
+sequencia operações de domínio. Caso concreto: `nova_requisicao` abria
+`transaction.atomic` e encadeava `criar_requisicao` → `enviar_para_autorizacao`
+na própria view. Passa a existir `criar_e_enviar_requisicao(...)` (composto,
+dono da transação, retorno paralelo a `criar_requisicao`). Hierarquia:
+
+```text
+View → Service composto → Services atômicos → Domínio
+```
+
+A fronteira transacional é única — o composto abre, os atômicos não reabrem.
+Generaliza para futuras composições (cancelar + liberar reserva, atender +
+movimentar estoque).
+
+### `services.py` promovido a pacote por capability de domínio
+
+A promoção a pacote (já prevista no ADR) organiza por **capability de domínio**,
+não por tipo técnico. Proibido `helpers.py`/`utils.py`/`commands.py`/`queries.py`;
+permitido `ciclo_vida.py`, `cancelamento.py`, `atendimento.py`, `copia.py` e um
+`composites.py` próprio para os services compostos. A API pública permanece
+estável via reexport em `services/__init__.py` — reorganização interna sem
+impacto em chamadores. Cada submódulo é uma capability relativamente
+independente; coordenação entre capabilities mora nos compostos, evitando
+imports cruzados entre submódulos.
+
+A mutação de domínio continua concentrada nos services **atômicos** — a regra
+de "único ponto de mutação" do `CONVENTIONS.md` permanece intacta. O service
+composto não é um segundo ponto de mutação independente: é só a fronteira
+transacional que coordena os atômicos.
+
+### Forms/formsets entregam value objects tipados, não dicts
+
+Quando a transformação depende **apenas** dos dados submetidos, ela é
+responsabilidade do form/formset, que entrega **value objects tipados** (estilo
+`linhas_validas()` → `LinhaAtendimento`), nunca dicts anônimos nem comandos. O
+form **não** chama o service nem conhece seu comando. Transformações que exigem
+consulta ou regra de negócio ficam fora do form. Isso tira das views o shaping
+manual de payload de domínio.
+
+Limite com as exceções de domínio: a validação de **qualidade de input**
+continua no form (Django `ValidationError`, ADR-0011); **invariantes de
+domínio** permanecem no service, que lança as exceções de
+`apps.core.exceptions` (ex.: `DadosInvalidos`), traduzidas na view por
+`traduz_erro_dominio` (ADR-0011). O VO entregue pelo form carrega input válido —
+não encapsula erro de domínio em dict genérico.
