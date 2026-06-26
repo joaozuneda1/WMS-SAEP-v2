@@ -156,3 +156,68 @@ A ausência de `blocked_reason` simplifica a implementação inicial. Quando uma
 `ator_id` em vez de `ator: User` cria uma query extra por chamada de service. Essa é a escolha intencional: centralizar carregamento no domínio, evitar instâncias stale, e manter views ignorantes do grafo de relações necessário para cada operação. A performance é aceitável para o volume esperado do sistema.
 
 Exceções de domínio próprias exigem tradução explícita em views, em vez de depender do middleware Django para `PermissionDenied`. Aceita-se esse custo em troca de domínio desacoplado de HTTP e testável sem request.
+
+## Emenda — 2026-06-26 (revisão de arquitetura)
+
+Três refinamentos ao contrato, derivados de uma sessão de deepening. Não revogam
+o ADR; estreitam interfaces que estavam difusas no código.
+
+### Policies recebem `PapelEfetivo`, nunca `User`
+
+A derivação de papel (chefe/auxiliar de almoxarifado, escopo de setor,
+elegibilidade de beneficiário) estava duplicada em quatro arquivos
+(`requisicoes`/`estoque` × `policies`/`selectors`), com cláusulas `except`
+divergentes. Passa a existir um único módulo `apps/accounts/papeis.py` com:
+
+- `PapelEfetivo` — value object **frozen e sem ORM** (dado puro);
+- `papel_efetivo(usuario) -> PapelEfetivo` — **único boundary de IO** (uma
+  consulta de vínculos + `setor_chefiado`).
+
+As policies passam a receber **exclusivamente** `PapelEfetivo` + o recurso
+avaliado: `pode_x(papel: PapelEfetivo, recurso)`. Nenhuma policy executa IO nem
+resolve identidade internamente. O chamador (view/service composto) resolve
+`papel_efetivo` **uma vez** no início do caso de uso e reutiliza em todas as
+checagens. `PapelEfetivo` é um **snapshot** (ver CONTEXT, "Papel efetivo"): não
+se atualiza sozinho se vínculos mudarem no meio da transação. Isso substitui o
+contrato anterior ("policies recebem objetos carregados") pela forma específica
+`PapelEfetivo`.
+
+### Transições keyed por operação (fonte única do grafo de estados)
+
+A ilustração original deste ADR já mostrava `operacao → {estados_origem,
+estado_destino, evento_timeline}`, mas `transitions.py` derivou para um mapa
+`estado_origem → {destinos}`, deixando o conhecimento "operação → estado de
+origem exigido" hardcoded em condicionais de view (shadow state machine de ~11
+flags no detalhe da requisição). `transitions.py` volta a ser **keyed por
+`Operacao`** (enum) com `estados_origem` (sempre conjunto), `estado_destino` e
+`evento_timeline`. Consumidores únicos da mesma tabela:
+
+- `verificar_transicao_valida(operacao, requisicao)` (services);
+- `acoes_disponiveis(papel, requisicao) -> frozenset[Operacao]` (UI, services).
+
+Separação estrita de níveis: a tabela responde "operação permitida **neste
+estado**?"; a policy responde "**este papel** pode executá-la?". A tabela nunca
+codifica autorização. As flags de template viram projeções (`Operacao.X in
+acoes`). Metadados de execução de uma operação (ex.: `CancelamentoInfo` com
+`requer_justificativa`/`libera_reserva`) viajam como **classificação de
+domínio**, sem strings de apresentação.
+
+### Mapeamento canônico exceção → HTTP
+
+A tradução exceção de domínio → resposta HTTP estava replicada em ~50 blocos
+`try/except` com drift (ex.: `PermissaoNegada` ora 403, ora mensagem; `JsonResponse`
+vs redirect). Passa a existir um **tradutor puro**:
+
+```text
+traduz_erro_dominio(exc) -> ErroPresentation(status, severity, default_message)
+```
+
+Independente de Django/HTMX/forms/templates. A **view** materializa a resposta
+concreta (`messages` + redirect / `JsonResponse` / `render` / `PermissionDenied`).
+O mapeamento canônico (`PermissaoNegada → 403`; `DadosInvalidos → error`;
+`EstadoInvalido`/`ConflitoDominio → warning`) é a fonte única **por padrão**.
+Divergências são permitidas só por requisito de contrato do endpoint (JSON,
+re-render de form HTMX), como **override explícito e documentado** — nunca
+acidente. Casos cuja resposta depende de estado intermediário da UI (re-render
+de formulário) **não usam** o tradutor. `severity` alinha com os níveis do
+contrato de mensagens (`error`/`warning`/`success`/`info`).

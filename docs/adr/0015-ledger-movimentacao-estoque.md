@@ -228,3 +228,54 @@ fonte real e integridade referencial forte.
 Uma terceira origem de movimentação no futuro exigirá nova coluna e migration —
 custo desejável, porque nova origem é mudança relevante de domínio e deve ser
 modelada explicitamente, não absorvida por uma FK genérica.
+
+## Emenda — 2026-06-26 (revisão de arquitetura)
+
+Quando TR-020/TR-021 foram implementadas, `requisicoes` passou a mutar o ledger
+**por fora** do boundary deste ADR: importa o helper privado
+`_registrar_movimentacao`, trava `SaldoEstoque.objects.select_for_update()` e
+monta as linhas à mão para devolução e estorno. Três das cinco operações vão
+pela interface pública do estoque; duas furam o encapsulamento. A invariante
+"saldo nunca muda sem movimentação" passa a depender de o **chamador** lembrar
+de fazer as duas coisas — a localidade que o ledger deveria garantir vaza.
+
+### Toda mutação de saldo atrás de comandos de negócio completos
+
+A interface pública do estoque é composta por **comandos de negócio**, não por
+primitivas do ledger. Devolução e estorno de requisição viram comandos públicos
+do estoque (ex.: `registrar_devolucao_estoque`, `estornar_requisicao_estoque`),
+simétricos aos três existentes. Cada comando é **completo e atômico**: encapsula
+movimentação + saldo + reservas numa transação; o chamador não participa nem
+monta linhas. Com isso:
+
+- `_registrar_movimentacao` volta a ser **estritamente privado** — sem import
+  por `requisicoes`;
+- `SaldoEstoque` e seu `select_for_update` **saem** de `requisicoes`;
+- os verbos devem permanecer **capacidades do domínio de estoque** (origem pode
+  ser Requisição **ou** Saída excepcional), não espelho do workflow de um único
+  cliente.
+
+`estorno_requisicao` (comando): aplica a movimentação inversa do consumo,
+restaurando o `saldo_fisico` da **entregue líquida** atual do item e gerando
+`MovimentacaoEstoque` de tipo `estorno_requisicao`.
+
+### `entregue_liquida` por referência estável; sem import reverso
+
+O selector vivia em `estoque` mas importava `requisicoes.models.ItemRequisicao`
+para resolver `item → material` — a única aresta `estoque → requisicoes`. O
+cálculo continua no estoque (dono do ledger), mas a interface recebe uma
+**referência estável** `(requisicao_id, material_id)` como contrato público de
+leitura (promover a tipo de referência frozen se um terceiro parâmetro surgir).
+`requisicoes` resolve `item → material` **antes** de chamar. `estoque` deixa de
+importar `requisicoes.models`: a dependência fica unidirecional `requisicoes →
+estoque`.
+
+### Tipos do seam = contrato explícito + factory
+
+Os tipos que cruzam o seam (ex.: o `TypedDict ItemAtendimentoSaldo`, hoje passado
+por estrutura) viram **contrato explícito** (`estoque/types.py`) com value
+objects, mantendo o padrão `OrigemMovimentacaoEstoque.de_requisicao(...)`.
+`requisicoes` não importa símbolos privados nem tipos internos do estoque.
+
+O bootstrap de `confirmar_importacao_scpi` segue fora do ledger (lacuna já
+registrada nas Limitações).
